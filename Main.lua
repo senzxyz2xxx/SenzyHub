@@ -293,58 +293,56 @@ makeButton(scroll, "Loyalty Discord", "claim discord prize", 4, function()
 end)
 
 makeButton(scroll, "Unit Dex Reward", "claim unit dex reward", 5, function()
-    print("--- [Senzy Debug Start] ---")
+    print("--- [Senzy Hub Debug] ---")
     
-    -- 1. เช็ค Remote
-    local systems = game:GetService("ReplicatedStorage"):FindFirstChild("Systems")
-    local dexFolder = systems and systems:FindFirstChild("UnitDex")
-    local claimRemote = dexFolder and dexFolder:FindFirstChild("ClaimUnitReward")
+    -- 1. ดึง Remote ตรงๆ ไม่ผ่านตัวแปร RF
+    local rs = game:GetService("ReplicatedStorage")
+    local systems = rs:FindFirstChild("Systems")
     
-    if not claimRemote then
-        warn("❌ [Error] ไม่พบ Remote: ReplicatedStorage.Systems.UnitDex.ClaimUnitReward")
+    if not systems then
+        warn("❌ [Log] ไม่พบโฟลเดอร์ Systems ใน ReplicatedStorage")
+        return
+    end
+    
+    local dexFolder = systems:FindFirstChild("UnitDex")
+    local remote = dexFolder and dexFolder:FindFirstChild("ClaimUnitReward")
+    
+    if not remote then
+        warn("❌ [Log] ไม่พบ Remote: Systems.UnitDex.ClaimUnitReward")
         return
     end
 
-    -- 2. เช็คที่เก็บข้อมูลยูนิต (อิงจาก Explorer ที่ส่งมา)
-    local unitsFolder = game:GetService("ReplicatedStorage"):FindFirstChild("Units")
-    if not unitsFolder then
-        warn("❌ [Error] ไม่พบโฟลเดอร์ Units ใน ReplicatedStorage")
-        return
-    end
+    -- 2. รายชื่อยูนิต (เอาเฉพาะตัวหลักๆ จากรูปที่คุณส่งมาเพื่อเช็คก่อน)
+    local testUnits = {
+        "Ice Mage", "Fire Mage", "Archer", "Swordsman", "Ninja", "Dragoon",
+        "Reaper", "Emperor", "Seraph", "Divine", "Kitsune Mage", "Demon Knight"
+    }
 
-    local allUnits = unitsFolder:GetChildren()
-    print("🔍 พบยูนิตในระบบทั้งหมด: " .. #allUnits .. " ตัว")
+    print("🔍 กำลังเริ่มตรวจสอบรางวัลจากยูนิต " .. #testUnits .. " รายการ...")
 
-    -- 3. เริ่มส่งคำขอ
-    local successCount = 0
-    local failCount = 0
-
-    for _, unit in ipairs(allUnits) do
-        local unitName = unit.Name
-        
-        -- ใช้ pcall ครอบ InvokeServer เพื่อดู Error จาก Server
-        local ok, result = pcall(function()
-            return claimRemote:InvokeServer(unitName)
-        end)
-
-        if ok then
-            if result then
-                successCount = successCount + 1
-                print("✅ สำเร็จ: " .. unitName .. " (ได้รับ Gems: " .. tostring(result) .. ")")
+    -- 3. ลูปยิงชื่อยูนิต
+    for _, name in ipairs(testUnits) do
+        task.spawn(function()
+            -- ใช้ pcall กันสคริปต์หลุด
+            local ok, result = pcall(function()
+                return remote:InvokeServer(name)
+            end)
+            
+            if ok then
+                if result then
+                    print("✅ [Success] รับรางวัลสำเร็จ: " .. name)
+                else
+                    -- ถ้า Server คืนค่า false/nil แปลว่ารับไปแล้วหรือยังไม่มีตัวนี้
+                    -- ไม่ต้อง print ก็ได้จะได้ไม่รก Log
+                end
             else
-                -- result เป็น nil/false มักเกิดจากรับไปแล้ว หรือยังไม่มีตัวนั้น
-                failCount = failCount + 1
+                warn("⚠️ [Error] ไม่สามารถส่งชื่อ: " .. name .. " | " .. tostring(result))
             end
-        else
-            warn("⚠️ Server Error (" .. unitName .. "): " .. tostring(result))
-        end
-        
-        -- ดีเลย์สั้นๆ เพื่อความเสถียร
+        end)
         task.wait(0.05)
     end
-
-    print("--- [Senzy Debug End] ---")
-    print("📊 สรุปผล: สำเร็จ " .. successCount .. " | ไม่ผ่าน " .. failCount)
+    
+    print("--- [Senzy Hub Finished] ---")
 end)
 -- CHESTS
 makeToggle(scroll, "Auto Collect", "วาร์ปเก็บ chest อัตโนมัติ", 7,
