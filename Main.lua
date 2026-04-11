@@ -293,9 +293,31 @@ makeButton(scroll, "Loyalty Discord", "claim discord prize", 4, function()
 end)
 
 makeButton(scroll, "Unit Dex Reward", "claim unit dex reward", 5, function()
-    RF.UnitDex.ClaimUnitReward:InvokeServer()
+    -- ดึงระบบ Profile มาเช็คว่าเรามียูนิตตัวไหนใน Dex บ้าง
+    local player = game.Players.LocalPlayer
+    local stats = player:FindFirstChild("leaderstats") -- หรือจุดที่เกมเก็บข้อมูล Profile
+    
+    -- ใช้ Remote จากโฟลเดอร์ Systems ที่คุณหาเจอ
+    local claimRemote = game.ReplicatedStorage.Systems.UnitDex.ClaimUnitReward
+    
+    -- วิธีที่ชัวร์ที่สุด: วนลูปหาใน PlayerGui หรือ Folder ที่เก็บ Dex ของเรา
+    -- จากโค้ดที่คุณส่งมา ข้อมูลจะอยู่ใน Profile.UnitDex
+    -- เราจะลองยิงชื่อยูนิตจากตาราง Tier List ที่เรามี หรือดึงจากโฟลเดอร์ Units
+    
+    local unitsFolder = game.ReplicatedStorage:FindFirstChild("Units")
+    if unitsFolder then
+        for _, unit in ipairs(unitsFolder:GetChildren()) do
+            -- ยิงเฉพาะตัวที่เรามีใน Dex (ถ้าเช็คได้) หรือยิงรัวๆ ไปเลย pcall จะช่วยข้ามตัวที่ไม่ได้รางวัลเอง
+            task.spawn(function()
+                local success, amount = claimRemote:InvokeServer(unit.Name)
+                if success then
+                    print("Claimed " .. amount .. " Gems from: " .. unit.Name)
+                end
+            end)
+            task.wait(0.1)
+        end
+    end
 end)
-
 -- CHESTS
 makeToggle(scroll, "Auto Collect", "วาร์ปเก็บ chest อัตโนมัติ", 7,
     function()
