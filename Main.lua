@@ -293,43 +293,58 @@ makeButton(scroll, "Loyalty Discord", "claim discord prize", 4, function()
 end)
 
 makeButton(scroll, "Unit Dex Reward", "claim unit dex reward", 5, function()
-    local unitsFolder = game:GetService("ReplicatedStorage"):FindFirstChild("Units")
-    local claimRemote = game:GetService("ReplicatedStorage").Systems.UnitDex.ClaimUnitReward
+    print("--- [Senzy Debug Start] ---")
     
+    -- 1. เช็ค Remote
+    local systems = game:GetService("ReplicatedStorage"):FindFirstChild("Systems")
+    local dexFolder = systems and systems:FindFirstChild("UnitDex")
+    local claimRemote = dexFolder and dexFolder:FindFirstChild("ClaimUnitReward")
+    
+    if not claimRemote then
+        warn("❌ [Error] ไม่พบ Remote: ReplicatedStorage.Systems.UnitDex.ClaimUnitReward")
+        return
+    end
+
+    -- 2. เช็คที่เก็บข้อมูลยูนิต (อิงจาก Explorer ที่ส่งมา)
+    local unitsFolder = game:GetService("ReplicatedStorage"):FindFirstChild("Units")
     if not unitsFolder then
-        warn(" [Senzy Log] ไม่พบโฟลเดอร์ Units ใน ReplicatedStorage")
+        warn("❌ [Error] ไม่พบโฟลเดอร์ Units ใน ReplicatedStorage")
         return
     end
 
     local allUnits = unitsFolder:GetChildren()
-    print(" [Senzy Log] เริ่มตรวจสอบ Unit Dex ทั้งหมด " .. #allUnits .. " รายการ...")
+    print("🔍 พบยูนิตในระบบทั้งหมด: " .. #allUnits .. " ตัว")
+
+    -- 3. เริ่มส่งคำขอ
+    local successCount = 0
+    local failCount = 0
 
     for _, unit in ipairs(allUnits) do
-        -- ใช้ task.spawn เพื่อให้วนลูปได้เร็ว ไม่ต้องรอตัวแรกเสร็จ
-        task.spawn(function()
-            local unitName = unit.Name
-            print(" [Senzy Log] กำลังลองกดรับ: " .. unitName)
-            
-            local success, res = pcall(function()
-                return claimRemote:InvokeServer(unitName)
-            end)
-
-            if success then
-                if res then
-                    print(" ✅ [Senzy Log] สำเร็จ: " .. unitName .. " | ได้รับ Gems: " .. tostring(res))
-                else
-                    -- ถ้า res เป็น nil/false แปลว่าเงื่อนไขใน Server ไม่ผ่าน (เช่น รับไปแล้ว หรือยังไม่ปลดล็อก)
-                    print(" ❌ [Senzy Log] ไม่สำเร็จ (Server Reject): " .. unitName)
-                end
-            else
-                warn(" ⚠️ [Senzy Log] Error ขณะยิง Remote: " .. tostring(res))
-            end
-        end)
+        local unitName = unit.Name
         
-        -- ดีเลย์เล็กน้อยป้องกันการส่งข้อมูลถี่เกินไปจนโดน Kick
-        task.wait(0.1)
+        -- ใช้ pcall ครอบ InvokeServer เพื่อดู Error จาก Server
+        local ok, result = pcall(function()
+            return claimRemote:InvokeServer(unitName)
+        end)
+
+        if ok then
+            if result then
+                successCount = successCount + 1
+                print("✅ สำเร็จ: " .. unitName .. " (ได้รับ Gems: " .. tostring(result) .. ")")
+            else
+                -- result เป็น nil/false มักเกิดจากรับไปแล้ว หรือยังไม่มีตัวนั้น
+                failCount = failCount + 1
+            end
+        else
+            warn("⚠️ Server Error (" .. unitName .. "): " .. tostring(result))
+        end
+        
+        -- ดีเลย์สั้นๆ เพื่อความเสถียร
+        task.wait(0.05)
     end
-    print(" [Senzy Log] ทำงานเสร็จสิ้น!")
+
+    print("--- [Senzy Debug End] ---")
+    print("📊 สรุปผล: สำเร็จ " .. successCount .. " | ไม่ผ่าน " .. failCount)
 end)
 -- CHESTS
 makeToggle(scroll, "Auto Collect", "วาร์ปเก็บ chest อัตโนมัติ", 7,
