@@ -293,36 +293,27 @@ makeButton(scroll, "Loyalty Discord", "claim discord prize", 4, function()
 end)
 
 makeButton(scroll, "Unit Dex Reward", "claim unit dex reward", 5, function()
-    -- 1. อ้างอิง Remote
-    local claimRemote = game:GetService("ReplicatedStorage"):WaitForChild("Systems"):WaitForChild("UnitDex"):WaitForChild("ClaimUnitReward")
-    
-    -- 2. ค้นหาโฟลเดอร์ UnitDex ใน Profile ของผู้เล่น (อิงจาก Module ที่ส่งมา)
-    -- ปกติ Data จะถูกจำลองมาไว้ใน PlayerGui หรือโฟลเดอร์ใน ReplicatedStorage/Players
-    -- เราจะลองหาตำแหน่งที่เก็บค่า "Attribute" ของ Dex
-    
-    local player = game.Players.LocalPlayer
-    
-    -- วิธีที่ชัวร์ที่สุด: วนลูปรายชื่อจาก Folder Units ทั้งหมด (เพราะ Dex มักจะอิงชื่อตามนี้)
+    -- ดึงโฟลเดอร์ Units เพื่อเอาชื่อยูนิตทั้งหมด (อ้างอิงจาก Explorer ของคุณ)
     local unitsFolder = game:GetService("ReplicatedStorage"):FindFirstChild("Units")
-    
+    local claimRemote = game:GetService("ReplicatedStorage").Systems.UnitDex.ClaimUnitReward
+
     if unitsFolder then
-        local units = unitsFolder:GetChildren()
-        print("Starting Auto-Claim for " .. #units .. " units...")
+        local allUnits = unitsFolder:GetChildren()
         
-        for _, unit in ipairs(units) do
-            -- ใช้ spawn เพื่อไม่ให้ loop ติดขัดถ้าตัวไหน error
+        for _, unit in ipairs(allUnits) do
+            -- ใช้ pcall เพื่อป้องกันสคริปต์หยุดทำงานหากบางตัวยังไม่ปลดล็อก
             task.spawn(function()
-                -- ยิงชื่อ Model เข้าไปตรงๆ
-                local success, amount = claimRemote:InvokeServer(unit.Name)
-                
-                if success and amount then
-                    print("✅ Claimed: " .. unit.Name .. " | Received: " .. tostring(amount) .. " Gems")
+                local success, reward = claimRemote:InvokeServer(unit.Name)
+                if success then
+                    print("✅ Claimed reward for: " .. unit.Name .. " (Gems: " .. tostring(reward) .. ")")
                 end
             end)
-            task.wait(0.1) -- กัน Spam เกินไป
+            -- ดีเลย์เล็กน้อยเพื่อป้องกันการส่ง Request ถี่เกินไปจนโดนเตะ
+            task.wait(0.1)
         end
     else
-        warn("Could not find Units folder in ReplicatedStorage")
+        -- กรณีหาโฟลเดอร์ Units ไม่เจอ ให้ลองใช้ชื่อ Swordsman เป็นตัวอย่างพื้นฐาน
+        claimRemote:InvokeServer("Swordsman")
     end
 end)
 -- CHESTS
