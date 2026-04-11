@@ -293,17 +293,36 @@ makeButton(scroll, "Loyalty Discord", "claim discord prize", 4, function()
 end)
 
 makeButton(scroll, "Unit Dex Reward", "claim unit dex reward", 5, function()
-    -- ทดสอบส่งชื่อ Swordsman ตามที่สงสัย
-    local unitName = "Swordsman"
+    -- 1. อ้างอิง Remote
+    local claimRemote = game:GetService("ReplicatedStorage"):WaitForChild("Systems"):WaitForChild("UnitDex"):WaitForChild("ClaimUnitReward")
     
-    local success, res = pcall(function()
-        return RF.UnitDex.ClaimUnitReward:InvokeServer(unitName)
-    end)
+    -- 2. ค้นหาโฟลเดอร์ UnitDex ใน Profile ของผู้เล่น (อิงจาก Module ที่ส่งมา)
+    -- ปกติ Data จะถูกจำลองมาไว้ใน PlayerGui หรือโฟลเดอร์ใน ReplicatedStorage/Players
+    -- เราจะลองหาตำแหน่งที่เก็บค่า "Attribute" ของ Dex
     
-    if success then
-        print("Successfully claimed reward for: " .. unitName)
+    local player = game.Players.LocalPlayer
+    
+    -- วิธีที่ชัวร์ที่สุด: วนลูปรายชื่อจาก Folder Units ทั้งหมด (เพราะ Dex มักจะอิงชื่อตามนี้)
+    local unitsFolder = game:GetService("ReplicatedStorage"):FindFirstChild("Units")
+    
+    if unitsFolder then
+        local units = unitsFolder:GetChildren()
+        print("Starting Auto-Claim for " .. #units .. " units...")
+        
+        for _, unit in ipairs(units) do
+            -- ใช้ spawn เพื่อไม่ให้ loop ติดขัดถ้าตัวไหน error
+            task.spawn(function()
+                -- ยิงชื่อ Model เข้าไปตรงๆ
+                local success, amount = claimRemote:InvokeServer(unit.Name)
+                
+                if success and amount then
+                    print("✅ Claimed: " .. unit.Name .. " | Received: " .. tostring(amount) .. " Gems")
+                end
+            end)
+            task.wait(0.1) -- กัน Spam เกินไป
+        end
     else
-        warn("Failed to claim: " .. tostring(res))
+        warn("Could not find Units folder in ReplicatedStorage")
     end
 end)
 -- CHESTS
