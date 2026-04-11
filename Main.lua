@@ -294,14 +294,13 @@ end)
 
 makeButton(scroll, "Unit Dex Reward", "claim unit dex reward", 5, function()
     local rs = game:GetService("ReplicatedStorage")
-    local remote = rs:WaitForChild("Systems", 5):WaitForChild("UnitDex", 5):WaitForChild("ClaimUnitReward", 5)
+    local systems = rs:WaitForChild("Systems", 5)
     
-    if not remote then 
-        warn("❌ ไม่พบ Remote")
-        return 
-    end
-
-    -- รวมชื่อยูนิตทั้งหมด 43 ตัว (จากรูป Tier List ของคุณ)
+    -- Remote 1: ตัวโหลด Model (ที่คุณเพิ่งเจอ)
+    local loadRemote = systems:WaitForChild("ModelProvider"):WaitForChild("ModelReceived")
+    -- Remote 2: ตัวรับรางวัล
+    local claimRemote = systems:WaitForChild("UnitDex"):WaitForChild("ClaimUnitReward")
+    
     local allUnits = {
         "Reaper", "Emperor", "Seraph", "B-4R B.E.T", "Divine",
         "Jester", "Sniper", "Technomancer", "Kitsune Mage", "Mermaid", "Abyss Lord", "Demon Knight",
@@ -311,24 +310,25 @@ makeButton(scroll, "Unit Dex Reward", "claim unit dex reward", 5, function()
         "Academy Witch", "Ninja", "Framerate", "Bandit", "Swordsman", "Deckhand"
     }
 
-    print("--- [Senzy Hub] เริ่มตรวจสอบยูนิตทั้งหมดในระบบ ---")
+    print("--- [Senzy Hub] Starting Combo Claim ---")
 
     for _, name in ipairs(allUnits) do
         task.spawn(function()
+            -- จังหวะ 1: หลอกว่าโหลด Model แล้ว
+            loadRemote:FireServer(name)
+            task.wait(0.1) -- รอจังหวะนิดนึง
+            
+            -- จังหวะ 2: กดรับรางวัล
             local ok, result = pcall(function()
-                return remote:InvokeServer(name)
+                return claimRemote:InvokeServer(name)
             end)
             
-            -- ถ้าสำเร็จ (result จะเป็นจำนวน Gems เช่น 25, 50)
             if ok and result then
-                print("✅ [Success] รับรางวัลสำเร็จ: " .. name .. " | ได้ " .. tostring(result) .. " Gems")
+                print("✅ [Success] Combo Completed: " .. name .. " | Gems Received!")
             end
         end)
+        task.wait(0.05)
     end
-    
-    -- ข้อความแจ้งเตือนสั้นๆ บน Log
-    task.wait(1)
-    print("--- [Senzy Hub] ตรวจสอบเสร็จสิ้น (เช็คเฉพาะตัวที่คุณมี) ---")
 end)
 -- CHESTS
 makeToggle(scroll, "Auto Collect", "วาร์ปเก็บ chest อัตโนมัติ", 7,
