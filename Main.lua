@@ -296,42 +296,44 @@ makeButton(scroll, "Unit Dex Reward", "claim unit dex reward", 5, function()
     local rs = game:GetService("ReplicatedStorage")
     local systems = rs:WaitForChild("Systems", 5)
     
-    -- ดึง Remote ทั้ง 3 ตัวตามที่คุณเจอใน SimpleSpy
     local getModelRemote = systems:WaitForChild("ModelProvider"):WaitForChild("GetModel")
     local modelReceivedRemote = systems:WaitForChild("ModelProvider"):WaitForChild("ModelReceived")
     local claimRemote = systems:WaitForChild("UnitDex"):WaitForChild("ClaimUnitReward")
     
-    local allUnits = {
-        "Reaper", "Emperor", "Seraph", "B-4R B.E.T", "Divine",
-        "Jester", "Sniper", "Technomancer", "Kitsune Mage", "Mermaid", "Abyss Lord", "Demon Knight",
-        "Bear Tamer", "Laser Cyborg", "Slime Summoner", "Demon Hunter", "Necromancer", "Ice Mage", "Spellblade",
-        "Archer", "Diver", "Fire Mage", "Wind Samurai", "Dragoon", "Specter",
-        "Dual Wielder", "Vampire", "Captain", "Street Rat", "Cyber DJ", "Outlaw",
-        "Academy Witch", "Ninja", "Framerate", "Bandit", "Swordsman", "Deckhand"
+    -- เน้นรายชื่อยูนิตที่คุณมีใน Dex แน่นอน (อ้างอิงจากรูป Tier List)
+    local targetUnits = {
+        "Ice Mage", "Deckhand", "Swordsman", "Archer", "Ninja", "Bandit"
     }
 
-    print("--- [Senzy Hub] Starting Full Sequence Claim ---")
+    print("--- [Senzy Hub] Starting Precision Claim ---")
 
-    for _, name in ipairs(allUnits) do
+    for _, name in ipairs(targetUnits) do
+        -- ใช้ Coroutine เพื่อไม่ให้การรอนานเกินไปกระทบภาพรวม
         task.spawn(function()
-            -- จังหวะ 1: เรียกโมเดลจาก Server (GetModel)
-            pcall(function() getModelRemote:InvokeServer(name, "Units") end)
-            task.wait(0.2)
-            
-            -- จังหวะ 2: ยืนยันว่าได้รับโมเดลแล้ว (ModelReceived)
-            modelReceivedRemote:FireServer(name)
-            task.wait(0.3)
-            
-            -- จังหวะ 3: กดรับรางวัล (ClaimUnitReward)
-            local ok, result = pcall(function()
-                return claimRemote:InvokeServer(name)
+            -- ขั้นตอนที่ 1: เรียกโมเดลและรอการยืนยัน
+            local modelSuccess = pcall(function() 
+                return getModelRemote:InvokeServer(name, "Units") 
             end)
             
-            if ok and result then
-                print("💰 [Success] " .. name .. " | Gems Received!")
+            if modelSuccess then
+                task.wait(0.5) -- รอให้ Server บันทึกสถานะว่า Client เรียกดูแล้ว
+                
+                -- ขั้นตอนที่ 2: ยืนยันการรับ
+                modelReceivedRemote:FireServer(name)
+                task.wait(0.5) 
+                
+                -- ขั้นตอนที่ 3: กดรับรางวัล
+                local ok, result = pcall(function()
+                    return claimRemote:InvokeServer(name)
+                end)
+                
+                if ok and result then
+                    print("💰 [SUCCESS] " .. name .. " | ได้รับ Gems เรียบร้อย!")
+                end
             end
         end)
-        task.wait(0.1) -- เว้นระยะเล็กน้อยเพื่อไม่ให้ส่ง Request ถี่เกินไป
+        -- เว้นระยะห่างระหว่างยูนิตแต่ละตัวเพื่อความเสถียร
+        task.wait(1) 
     end
 end)
 -- CHESTS
