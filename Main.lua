@@ -295,39 +295,31 @@ end)
 makeButton(scroll, "Unit Dex Reward", "claim unit dex reward", 5, function()
     local rs = game:GetService("ReplicatedStorage")
     local systems = rs:WaitForChild("Systems", 5)
-    
-    -- Remote 1: ตัวโหลด Model (ที่คุณเพิ่งเจอ)
     local loadRemote = systems:WaitForChild("ModelProvider"):WaitForChild("ModelReceived")
-    -- Remote 2: ตัวรับรางวัล
     local claimRemote = systems:WaitForChild("UnitDex"):WaitForChild("ClaimUnitReward")
     
-    local allUnits = {
-        "Reaper", "Emperor", "Seraph", "B-4R B.E.T", "Divine",
-        "Jester", "Sniper", "Technomancer", "Kitsune Mage", "Mermaid", "Abyss Lord", "Demon Knight",
-        "Bear Tamer", "Laser Cyborg", "Slime Summoner", "Demon Hunter", "Necromancer", "Ice Mage", "Spellblade",
-        "Archer", "Diver", "Fire Mage", "Wind Samurai", "Dragoon", "Specter",
-        "Dual Wielder", "Vampire", "Captain", "Street Rat", "Cyber DJ", "Outlaw",
-        "Academy Witch", "Ninja", "Framerate", "Bandit", "Swordsman", "Deckhand"
-    }
+    -- ลองแค่ตัวที่คุณมีชัวร์ๆ ก่อน (เช่น Ice Mage หรือ Deckhand)
+    local targetUnits = {"Ice Mage", "Deckhand", "Swordsman"} 
 
-    print("--- [Senzy Hub] Starting Combo Claim ---")
-
-    for _, name in ipairs(allUnits) do
-        task.spawn(function()
-            -- จังหวะ 1: หลอกว่าโหลด Model แล้ว
-            loadRemote:FireServer(name)
-            task.wait(0.1) -- รอจังหวะนิดนึง
-            
-            -- จังหวะ 2: กดรับรางวัล
-            local ok, result = pcall(function()
-                return claimRemote:InvokeServer(name)
-            end)
-            
-            if ok and result then
-                print("✅ [Success] Combo Completed: " .. name .. " | Gems Received!")
-            end
+    for _, name in ipairs(targetUnits) do
+        print("🚀 กำลังปลดล็อค: " .. name)
+        
+        -- 1. ยิงโหลดโมเดล
+        loadRemote:FireServer(name)
+        
+        -- 2. รอนานขึ้นนิดนึง (0.5 วินาที) ให้ Server บันทึกข้อมูล
+        task.wait(0.5) 
+        
+        -- 3. ยิงรับรางวัล
+        local ok, result = pcall(function()
+            return claimRemote:InvokeServer(name)
         end)
-        task.wait(0.05)
+        
+        if ok and result then
+            print("💰 [SUCCESS] Gems เข้าบัญชีแล้วสำหรับ: " .. name)
+        else
+            print("❌ [FAILED] ตัวนี้อาจจะรับไปแล้วหรือยังไม่เงื่อนไขไม่ครบ: " .. name)
+        end
     end
 end)
 -- CHESTS
