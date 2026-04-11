@@ -293,56 +293,42 @@ makeButton(scroll, "Loyalty Discord", "claim discord prize", 4, function()
 end)
 
 makeButton(scroll, "Unit Dex Reward", "claim unit dex reward", 5, function()
-    print("--- [Senzy Hub Debug] ---")
-    
-    -- 1. ดึง Remote ตรงๆ ไม่ผ่านตัวแปร RF
     local rs = game:GetService("ReplicatedStorage")
-    local systems = rs:FindFirstChild("Systems")
+    local remote = rs:WaitForChild("Systems", 5):WaitForChild("UnitDex", 5):WaitForChild("ClaimUnitReward", 5)
     
-    if not systems then
-        warn("❌ [Log] ไม่พบโฟลเดอร์ Systems ใน ReplicatedStorage")
-        return
-    end
-    
-    local dexFolder = systems:FindFirstChild("UnitDex")
-    local remote = dexFolder and dexFolder:FindFirstChild("ClaimUnitReward")
-    
-    if not remote then
-        warn("❌ [Log] ไม่พบ Remote: Systems.UnitDex.ClaimUnitReward")
-        return
+    if not remote then 
+        warn("❌ ไม่พบ Remote")
+        return 
     end
 
-    -- 2. รายชื่อยูนิต (เอาเฉพาะตัวหลักๆ จากรูปที่คุณส่งมาเพื่อเช็คก่อน)
-    local testUnits = {
-        "Ice Mage", "Fire Mage", "Archer", "Swordsman", "Ninja", "Dragoon",
-        "Reaper", "Emperor", "Seraph", "Divine", "Kitsune Mage", "Demon Knight"
+    -- รวมชื่อยูนิตทั้งหมด 43 ตัว (จากรูป Tier List ของคุณ)
+    local allUnits = {
+        "Reaper", "Emperor", "Seraph", "B-4R B.E.T", "Divine",
+        "Jester", "Sniper", "Technomancer", "Kitsune Mage", "Mermaid", "Abyss Lord", "Demon Knight",
+        "Bear Tamer", "Laser Cyborg", "Slime Summoner", "Demon Hunter", "Necromancer", "Ice Mage", "Spellblade",
+        "Archer", "Diver", "Fire Mage", "Wind Samurai", "Dragoon", "Specter",
+        "Dual Wielder", "Vampire", "Captain", "Street Rat", "Cyber DJ", "Outlaw",
+        "Academy Witch", "Ninja", "Framerate", "Bandit", "Swordsman", "Deckhand"
     }
 
-    print("🔍 กำลังเริ่มตรวจสอบรางวัลจากยูนิต " .. #testUnits .. " รายการ...")
+    print("--- [Senzy Hub] เริ่มตรวจสอบยูนิตทั้งหมดในระบบ ---")
 
-    -- 3. ลูปยิงชื่อยูนิต
-    for _, name in ipairs(testUnits) do
+    for _, name in ipairs(allUnits) do
         task.spawn(function()
-            -- ใช้ pcall กันสคริปต์หลุด
             local ok, result = pcall(function()
                 return remote:InvokeServer(name)
             end)
             
-            if ok then
-                if result then
-                    print("✅ [Success] รับรางวัลสำเร็จ: " .. name)
-                else
-                    -- ถ้า Server คืนค่า false/nil แปลว่ารับไปแล้วหรือยังไม่มีตัวนี้
-                    -- ไม่ต้อง print ก็ได้จะได้ไม่รก Log
-                end
-            else
-                warn("⚠️ [Error] ไม่สามารถส่งชื่อ: " .. name .. " | " .. tostring(result))
+            -- ถ้าสำเร็จ (result จะเป็นจำนวน Gems เช่น 25, 50)
+            if ok and result then
+                print("✅ [Success] รับรางวัลสำเร็จ: " .. name .. " | ได้ " .. tostring(result) .. " Gems")
             end
         end)
-        task.wait(0.05)
     end
     
-    print("--- [Senzy Hub Finished] ---")
+    -- ข้อความแจ้งเตือนสั้นๆ บน Log
+    task.wait(1)
+    print("--- [Senzy Hub] ตรวจสอบเสร็จสิ้น (เช็คเฉพาะตัวที่คุณมี) ---")
 end)
 -- CHESTS
 makeToggle(scroll, "Auto Collect", "วาร์ปเก็บ chest อัตโนมัติ", 7,
