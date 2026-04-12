@@ -346,6 +346,33 @@ makeButton("Claim UnitDex", "claim gem จากทุก unit", 5, function()
     end
 end)
 
+makeSection("round", 16)
+
+makeToggle("Auto Vote Next", "โหวต next หลังจบด่าน", 17, function()
+    local voteRE = game.ReplicatedStorage.Systems.Voting.Vote
+    while states["Auto Vote Next"] do
+        local timer = game.ReplicatedStorage:GetAttribute("RoundEndTimer")
+        if timer ~= nil then
+            pcall(function() voteRE:FireServer("Next") end)
+            print("✅ โหวต Next")
+            task.wait(18)
+        end
+        task.wait(1)
+    end
+end)
+
+makeToggle("Auto Vote Retry", "โหวต retry หลังจบด่าน", 18, function()
+    local voteRE = game.ReplicatedStorage.Systems.Voting.Vote
+    while states["Auto Vote Retry"] do
+        local timer = game.ReplicatedStorage:GetAttribute("RoundEndTimer")
+        if timer ~= nil then
+            pcall(function() voteRE:FireServer("Retry") end)
+            print("✅ โหวต Retry")
+            task.wait(18)
+        end
+        task.wait(1)
+    end
+end)
 -- CHESTS
 makeSection("chests", 6)
 
