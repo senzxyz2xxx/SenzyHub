@@ -9,7 +9,7 @@ local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.
 --สร้างหน้าต่างหลัก
 local Window = Fluent:CreateWindow({
     Title = "SENZY HUB",
-    SubTitle = "Anime Discovery | Fix Version",
+    SubTitle = "Summon Heroes | Fix Version",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
     Acrylic = true,
@@ -30,7 +30,7 @@ local Options = Fluent.Options
 -- ======== [ REWARDS ] ========
 Tabs.Main:AddButton({
     Title = "Claim UnitDex",
-    Description = "รับ Gem จากทุกยูนิต",
+    Description = "",
     Callback = function()
         local Items = require(game.ReplicatedStorage.Systems.Items)
         local unitData = Items:GetCategoryData("Units")
