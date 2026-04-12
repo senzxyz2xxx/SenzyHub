@@ -292,50 +292,44 @@ makeButton(scroll, "Loyalty Discord", "claim discord prize", 4, function()
     RF.Loyalty.ClaimDicordPrize:InvokeServer()
 end)
 
-makeButton(scroll, "Unit Dex Reward", "claim unit dex reward", 5, function()
-    local rs = game:GetService("ReplicatedStorage")
-    local systems = rs:WaitForChild("Systems", 5)
-    
-    local getModelRemote = systems:WaitForChild("ModelProvider"):WaitForChild("GetModel")
-    local modelReceivedRemote = systems:WaitForChild("ModelProvider"):WaitForChild("ModelReceived")
-    local claimRemote = systems:WaitForChild("UnitDex"):WaitForChild("ClaimUnitReward")
-    
-    -- เน้นรายชื่อยูนิตที่คุณมีใน Dex แน่นอน (อ้างอิงจากรูป Tier List)
-    local targetUnits = {
-        "Ice Mage", "Deckhand", "Swordsman", "Archer", "Ninja", "Bandit"
-    }
+local RF = game.ReplicatedStorage.Systems.UnitDex.ClaimUnitReward
+local Items = require(game.ReplicatedStorage.Systems.Items)
+local unitData = Items:GetCategoryData("Units")
 
-    print("--- [Senzy Hub] Starting Precision Claim ---")
-
-    for _, name in ipairs(targetUnits) do
-        -- ใช้ Coroutine เพื่อไม่ให้การรอนานเกินไปกระทบภาพรวม
-        task.spawn(function()
-            -- ขั้นตอนที่ 1: เรียกโมเดลและรอการยืนยัน
-            local modelSuccess = pcall(function() 
-                return getModelRemote:InvokeServer(name, "Units") 
-            end)
-            
-            if modelSuccess then
-                task.wait(0.5) -- รอให้ Server บันทึกสถานะว่า Client เรียกดูแล้ว
-                
-                -- ขั้นตอนที่ 2: ยืนยันการรับ
-                modelReceivedRemote:FireServer(name)
-                task.wait(0.5) 
-                
-                -- ขั้นตอนที่ 3: กดรับรางวัล
-                local ok, result = pcall(function()
-                    return claimRemote:InvokeServer(name)
-                end)
-                
-                if ok and result then
-                    print("💰 [SUCCESS] " .. name .. " | ได้รับ Gems เรียบร้อย!")
-                end
+local function closePopup()
+    for _, gui in ipairs(game.Players.LocalPlayer.PlayerGui:GetDescendants()) do
+        if gui:IsA("TextButton") then
+            -- ลองทุกปุ่มที่อาจเป็น close/claim
+            if gui.Text == "Claim!" or gui.Text == "Claim" 
+            or gui.Text == "X" or gui.Text == "✕" 
+            or gui.Text == "Close" or gui.BackgroundColor3 == Color3.fromRGB(255, 0, 0)
+            or gui.BackgroundColor3 == Color3.fromRGB(220, 50, 50) then
+                pcall(function() gui.MouseButton1Click:Fire() end)
             end
-        end)
-        -- เว้นระยะห่างระหว่างยูนิตแต่ละตัวเพื่อความเสถียร
-        task.wait(1) 
+        end
+        -- ลองซ่อน frame ที่เป็น popup ตรงๆ
+        if gui:IsA("Frame") or gui:IsA("ImageButton") then
+            if gui.Visible and gui.AbsoluteSize.X > 200 and gui.AbsoluteSize.X < 500 then
+                pcall(function() gui.Visible = false end)
+            end
+        end
     end
-end)
+end
+
+local success = 0
+
+for unitName, _ in pairs(unitData) do
+    pcall(function()
+        RF:InvokeServer(unitName)
+    end)
+    success += 1
+    task.wait(0.15)
+    closePopup()
+    task.wait(0.15)
+    print("✅ " .. unitName)
+end
+
+print("✅ ครบ " .. success .. " unit!")
 -- CHESTS
 makeToggle(scroll, "Auto Collect", "วาร์ปเก็บ chest อัตโนมัติ", 7,
     function()
