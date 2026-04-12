@@ -8,17 +8,17 @@ local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.
 
 local Window = Fluent:CreateWindow({
     Title = "SENZY HUB",
-    SubTitle = "Anime Discovery",
+    SubTitle = "Anime Discovery | Full Functions",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
-    Acrylic = true, 
+    Acrylic = true,
     Theme = "Darker",
     MinimizeKey = Enum.KeyCode.LeftControl
 })
 
--- จัดหมวดหมู่ Tab แบบพี่ VOX
 local Tabs = {
     Main = Window:AddTab({ Title = "Rewards", Icon = "star" }),
+    Chests = Window:AddTab({ Title = "Chests", Icon = "box" }),
     Farm = Window:AddTab({ Title = "Farm", Icon = "zap" }),
     Player = Window:AddTab({ Title = "Player", Icon = "user" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
@@ -26,126 +26,104 @@ local Tabs = {
 
 local Options = Fluent.Options
 
--- ==========================================
--- [ REWARDS TAB ]
--- ==========================================
-
+-- ======== [ REWARDS ] ========
 Tabs.Main:AddButton({
-    Title = "Claim All UnitDex",
-    Description = "รับ Gems จากยูนิตทุกตัวที่มีในดาต้าเบส",
+    Title = "Claim UnitDex",
+    Description = "รับ Gem จากทุกยูนิต",
     Callback = function()
         local Items = require(game.ReplicatedStorage.Systems.Items)
         local unitData = Items:GetCategoryData("Units")
-        local dexRF = game.ReplicatedStorage.Systems.UnitDex.ClaimUnitReward
-        
         for unitName in pairs(unitData) do
-            pcall(function() dexRF:InvokeServer(unitName) end)
+            pcall(function() game.ReplicatedStorage.Systems.UnitDex.ClaimUnitReward:InvokeServer(unitName) end)
             task.wait(0.1)
         end
-        
-        Fluent:Notify({
-            Title = "Success",
-            Content = "กวาดรางวัล UnitDex เรียบร้อยแล้ว!",
-            Duration = 5
-        })
     end
 })
 
--- ==========================================
--- [ FARM TAB ]
--- ==========================================
+-- ======== [ CHESTS (มาแล้ว!) ] ========
+local AutoCollect = Tabs.Chests:AddToggle("AutoCollect", {Title = "Auto Collect Chests", Default = false, Description = "วาร์ปเก็บกล่องอัตโนมัติ"})
+AutoCollect:OnChanged(function()
+    task.spawn(function()
+        while Options.AutoCollect.Value do
+            local ok, bonusChests = pcall(function() return workspace.Map.BonusChests end)
+            if ok and bonusChests then
+                local parts = {}
+                for _, c in ipairs(bonusChests:GetChildren()) do
+                    if c:IsA("BasePart") then table.insert(parts, c) end
+                end
+                
+                for _, part in ipairs(parts) do
+                    if not Options.AutoCollect.Value then break end
+                    local char = game.Players.LocalPlayer.Character
+                    local root = char and char:FindFirstChild("HumanoidRootPart")
+                    if root and part.Parent then
+                        root.CFrame = part.CFrame + Vector3.new(0, 3, 0)
+                        task.wait(0.5)
+                        pcall(function()
+                            fireproximityprompt(part:FindFirstChildOfClass("ProximityPrompt") or part:FindFirstChild("ProximityPrompt", true))
+                        end)
+                        task.wait(0.5)
+                    end
+                end
+            end
+            task.wait(2)
+        end
+    end)
+end)
 
--- แก้ไข Logic Vote Next ให้กดได้จริงและเสถียร
-local VoteNextToggle = Tabs.Farm:AddToggle("AutoVoteNext", {Title = "Auto Vote Next", Default = false, Description = "โหวตด่านต่อไปอัตโนมัติเมื่อจบตา"})
+-- ======== [ FARM ] ========
+Tabs.Farm:AddToggle("AutoClaimQuest", {Title = "Auto Claim Quest", Default = false}):OnChanged(function()
+    task.spawn(function()
+        while Options.AutoClaimQuest.Value do
+            for i = 1, 20 do
+                if not Options.AutoClaimQuest.Value then break end
+                pcall(function() game.ReplicatedStorage.Systems.Quests.ClaimQuest:InvokeServer(i) end)
+                task.wait(0.3)
+            end
+            task.wait(5)
+        end
+    end)
+end)
 
-VoteNextToggle:OnChanged(function()
+Tabs.Farm:AddToggle("AutoWave", {Title = "Auto Sweep Wave", Default = false}):OnChanged(function()
+    task.spawn(function()
+        while Options.AutoWave.Value do
+            pcall(function() game.ReplicatedStorage.Systems.Sweeps.SweepWave:InvokeServer() end)
+            task.wait(3)
+        end
+    end)
+end)
+
+-- แก้ไข AUTO VOTE NEXT (ตัวปัญหา)
+local AutoVoteNext = Tabs.Farm:AddToggle("AutoVoteNext", {Title = "Auto Vote Next", Default = false})
+AutoVoteNext:OnChanged(function()
     task.spawn(function()
         local voteRE = game.ReplicatedStorage:WaitForChild("Systems"):WaitForChild("Voting"):WaitForChild("Vote")
+        local voted = false
         while Options.AutoVoteNext.Value do
-            -- เช็คจาก Attribute ตามที่ระบบเกมใช้
-            if game.ReplicatedStorage:GetAttribute("RoundEndTimer") then
-                print("🏁 จบด่านแล้ว! กำลังส่งคำสั่งโหวต Next...")
-                pcall(function() voteRE:FireServer("Next") end)
-                
-                -- รอจนกว่าด่านใหม่จะเริ่ม (Timer หายไป) ถึงจะเริ่มทำงานรอบต่อไป
-                repeat task.wait(1) until not game.ReplicatedStorage:GetAttribute("RoundEndTimer") or not Options.AutoVoteNext.Value
-                print("🔄 เริ่มด่านใหม่ รีเซ็ตระบบโหวต")
+            local timer = game.ReplicatedStorage:GetAttribute("RoundEndTimer")
+            if timer ~= nil then
+                if not voted then
+                    pcall(function() voteRE:FireServer("Next") end)
+                    print("✅ Voted Next")
+                    voted = true
+                end
+            else
+                voted = false -- Reset เมื่อเริ่มด่านใหม่
             end
             task.wait(1)
         end
     end)
 end)
 
-local AutoClaimQuest = Tabs.Farm:AddToggle("AutoClaimQuest", {Title = "Auto Claim Quest", Default = false})
-AutoClaimQuest:OnChanged(function()
-    task.spawn(function()
-        local questRF = game.ReplicatedStorage.Systems.Quests.ClaimQuest
-        while Options.AutoClaimQuest.Value do
-            for i = 1, 25 do
-                if not Options.AutoClaimQuest.Value then break end
-                pcall(function() questRF:InvokeServer(i) end)
-                task.wait(0.2)
-            end
-            task.wait(10)
-        end
-    end)
-end)
+-- ======== [ PLAYER ] ========
+Tabs.Player:AddSlider("WS", {Title = "WalkSpeed", Default = 16, Min = 16, Max = 150, Rounding = 1, Callback = function(v)
+    pcall(function() game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = v end)
+end})
 
-local AutoWave = Tabs.Farm:AddToggle("AutoWave", {Title = "Auto Sweep Wave", Default = false})
-AutoWave:OnChanged(function()
-    task.spawn(function()
-        local sweepRF = game.ReplicatedStorage.Systems.Sweeps.SweepWave
-        while Options.AutoWave.Value do
-            pcall(function() sweepRF:InvokeServer() end)
-            task.wait(5)
-        end
-    end)
-end)
-
--- ==========================================
--- [ PLAYER TAB ]
--- ==========================================
-
-local SpeedSlider = Tabs.Player:AddSlider("WalkSpeed", {
-    Title = "WalkSpeed Hack",
-    Description = "ปรับความเร็วการเคลื่อนที่",
-    Default = 16,
-    Min = 16,
-    Max = 150,
-    Rounding = 1,
-    Callback = function(Value)
-        if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
-            game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
-        end
-    end
-})
-
-Tabs.Player:AddToggle("InfJump", {Title = "Infinite Jump", Default = false}):OnChanged(function()
-    local conn
-    conn = game:GetService("UserInputService").JumpRequest:Connect(function()
-        if not Options.InfJump.Value then conn:Disconnect() return end
-        pcall(function()
-            game.Players.LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-        end)
-    end)
-end)
-
--- ==========================================
--- [ FINALIZE ]
--- ==========================================
-
+-- ======== [ SETTINGS ] ========
 SaveManager:SetLibrary(Fluent)
 InterfaceManager:SetLibrary(Fluent)
-SaveManager:IgnoreThemeSettings()
-SaveManager:SetIgnoreIndexes({})
 InterfaceManager:BuildInterfaceSection(Tabs.Settings)
 SaveManager:BuildConfigSection(Tabs.Settings)
-
 Window:SelectTab(1)
-Fluent:Notify({
-    Title = "Senzy Hub Loaded",
-    Content = "กด Left Control เพื่อย่อ/ขยายเมนู",
-    Duration = 8
-})
-
-print("✅ [Senzy Hub] Fluent UI Loaded Successfully")
