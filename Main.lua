@@ -312,39 +312,29 @@ end
 -- ======== Sections ========
 
 -- REWARDS
-makeSection("rewards", 1)
-
-makeButton("Offline Rewards", "claim รางวัล offline", 2, function()
-    RF.OfflineRewards.ClaimRewards:InvokeServer()
-end)
-
-makeButton("Loyalty Roblox", "claim loyalty prize", 3, function()
-    RF.Loyalty.ClaimRobloxPrize:InvokeServer()
-end)
-
-makeButton("Loyalty Discord", "claim discord prize", 4, function()
-    RF.Loyalty.ClaimDicordPrize:InvokeServer()
-end)
-
 makeButton("Claim UnitDex", "claim gem จากทุก unit", 5, function()
     local Items = require(game.ReplicatedStorage.Systems.Items)
     local unitData = Items:GetCategoryData("Units")
     local dexRF = RF.UnitDex.ClaimUnitReward
+
     for unitName in pairs(unitData) do
         pcall(function() dexRF:InvokeServer(unitName) end)
         task.wait(0.1)
+
+        -- ปิดแค่ปุ่ม Claim! ไม่แตะ Visible
         for _, gui in ipairs(playerGui:GetDescendants()) do
             if gui:IsA("TextButton") and (gui.Text == "Claim!" or gui.Text == "Claim") then
                 pcall(function() gui.MouseButton1Click:Fire() end)
             end
-            if (gui:IsA("Frame") or gui:IsA("ImageButton")) and gui.Visible
-                and gui.AbsoluteSize.X > 200 and gui.AbsoluteSize.X < 500 then
-                pcall(function() gui.Visible = false end)
-            end
         end
-        task.wait(0.1)
+
+        task.wait(0.2)
     end
+    print("✅ UnitDex claim ครบ!")
 end)
+
+
+
 
 makeSection("round", 16)
 
