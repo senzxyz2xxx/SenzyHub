@@ -14,16 +14,14 @@ if playerGui:FindFirstChild("SenzyHub") then playerGui.SenzyHub:Destroy() end
 local states = {}
 local minimized = false
 
--- ======== GUI ROOT ========
 local sg = Instance.new("ScreenGui", playerGui)
 sg.Name = "SenzyHub"
 sg.ResetOnSpawn = false
 sg.DisplayOrder = 999
 
--- window
 local win = Instance.new("Frame", sg)
 win.Size = UDim2.new(0, 300, 0, 480)
-win.Position = UDim2.new(0, 24, 0.5, -240)
+win.Position = UDim2.new(0.5, -150, 0.5, -240)
 win.BackgroundColor3 = Color3.fromRGB(28, 28, 32)
 win.BorderSizePixel = 0
 win.Active = true
@@ -32,26 +30,20 @@ Instance.new("UICorner", win).CornerRadius = UDim.new(0, 12)
 
 local winStroke = Instance.new("UIStroke", win)
 winStroke.Color = Color3.fromRGB(70, 70, 78)
-winStroke.Transparency = 0
 winStroke.Thickness = 1
 
--- titlebar
 local titlebar = Instance.new("Frame", win)
 titlebar.Size = UDim2.new(1, 0, 0, 40)
 titlebar.BackgroundColor3 = Color3.fromRGB(36, 36, 40)
 titlebar.BorderSizePixel = 0
+Instance.new("UICorner", titlebar).CornerRadius = UDim.new(0, 12)
 
-local tbCorner = Instance.new("UICorner", titlebar)
-tbCorner.CornerRadius = UDim.new(0, 12)
-
--- fix titlebar bottom corners
 local tbFix = Instance.new("Frame", titlebar)
 tbFix.Size = UDim2.new(1, 0, 0.5, 0)
 tbFix.Position = UDim2.new(0, 0, 0.5, 0)
 tbFix.BackgroundColor3 = Color3.fromRGB(36, 36, 40)
 tbFix.BorderSizePixel = 0
 
--- traffic lights
 local function makeLight(color, xPos)
     local f = Instance.new("Frame", titlebar)
     f.Size = UDim2.new(0, 12, 0, 12)
@@ -62,13 +54,12 @@ local function makeLight(color, xPos)
     return f
 end
 
-local redLight   = makeLight(Color3.fromRGB(255, 95, 86),  12)
+local redLight    = makeLight(Color3.fromRGB(255, 95, 86),  12)
 local yellowLight = makeLight(Color3.fromRGB(255, 189, 46), 28)
 local greenLight  = makeLight(Color3.fromRGB(39, 201, 63),  44)
 
--- close
 local closeHit = Instance.new("TextButton", redLight)
-closeHit.Size = UDim2.new(1, 0, 1, 0)
+closeHit.Size = UDim2.new(1,0,1,0)
 closeHit.BackgroundTransparency = 1
 closeHit.Text = ""
 closeHit.MouseButton1Click:Connect(function()
@@ -76,118 +67,109 @@ closeHit.MouseButton1Click:Connect(function()
     sg:Destroy()
 end)
 
--- minimize
 local minHit = Instance.new("TextButton", yellowLight)
-minHit.Size = UDim2.new(1, 0, 1, 0)
+minHit.Size = UDim2.new(1,0,1,0)
 minHit.BackgroundTransparency = 1
 minHit.Text = ""
 minHit.MouseButton1Click:Connect(function()
     minimized = not minimized
     TweenService:Create(win, TweenInfo.new(0.2), {
-        Size = minimized and UDim2.new(0, 300, 0, 40) or UDim2.new(0, 300, 0, 480)
+        Size = minimized and UDim2.new(0,300,0,40) or UDim2.new(0,300,0,480)
     }):Play()
 end)
 
--- title
 local titleTxt = Instance.new("TextLabel", titlebar)
-titleTxt.Size = UDim2.new(1, 0, 1, 0)
+titleTxt.Size = UDim2.new(1,0,1,0)
 titleTxt.BackgroundTransparency = 1
 titleTxt.Text = "Senzy Hub"
-titleTxt.TextColor3 = Color3.fromRGB(220, 220, 220)
+titleTxt.TextColor3 = Color3.fromRGB(220,220,220)
 titleTxt.TextSize = 13
 titleTxt.Font = Enum.Font.GothamBold
 titleTxt.TextXAlignment = Enum.TextXAlignment.Center
 
--- separator
 local sep = Instance.new("Frame", win)
-sep.Size = UDim2.new(1, 0, 0, 1)
-sep.Position = UDim2.new(0, 0, 0, 40)
-sep.BackgroundColor3 = Color3.fromRGB(60, 60, 68)
+sep.Size = UDim2.new(1,0,0,1)
+sep.Position = UDim2.new(0,0,0,40)
+sep.BackgroundColor3 = Color3.fromRGB(60,60,68)
 sep.BorderSizePixel = 0
 
--- tab bar
 local tabBar = Instance.new("Frame", win)
-tabBar.Size = UDim2.new(1, 0, 0, 36)
-tabBar.Position = UDim2.new(0, 0, 0, 41)
-tabBar.BackgroundColor3 = Color3.fromRGB(32, 32, 36)
+tabBar.Size = UDim2.new(1,0,0,36)
+tabBar.Position = UDim2.new(0,0,0,41)
+tabBar.BackgroundColor3 = Color3.fromRGB(32,32,36)
 tabBar.BorderSizePixel = 0
 
 local tabLayout = Instance.new("UIListLayout", tabBar)
 tabLayout.FillDirection = Enum.FillDirection.Horizontal
 tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
-tabLayout.Padding = UDim.new(0, 0)
 
--- content area
+local sep2 = Instance.new("Frame", win)
+sep2.Size = UDim2.new(1,0,0,1)
+sep2.Position = UDim2.new(0,0,0,77)
+sep2.BackgroundColor3 = Color3.fromRGB(60,60,68)
+sep2.BorderSizePixel = 0
+
 local content = Instance.new("Frame", win)
-content.Size = UDim2.new(1, 0, 1, -78)
-content.Position = UDim2.new(0, 0, 0, 78)
+content.Size = UDim2.new(1,0,1,-78)
+content.Position = UDim2.new(0,0,0,78)
 content.BackgroundTransparency = 1
 content.ClipsDescendants = true
 
--- sep2
-local sep2 = Instance.new("Frame", win)
-sep2.Size = UDim2.new(1, 0, 0, 1)
-sep2.Position = UDim2.new(0, 0, 0, 77)
-sep2.BackgroundColor3 = Color3.fromRGB(60, 60, 68)
-sep2.BorderSizePixel = 0
-
 -- ======== Tab System ========
 local tabs = {}
-local activeTab = nil
 
 local function makeTab(name, icon, order)
     local btn = Instance.new("TextButton", tabBar)
-    btn.Size = UDim2.new(0.25, 0, 1, 0)
-    btn.BackgroundColor3 = Color3.fromRGB(32, 32, 36)
+    btn.Size = UDim2.new(0.25,0,1,0)
+    btn.BackgroundColor3 = Color3.fromRGB(32,32,36)
     btn.BorderSizePixel = 0
-    btn.Text = icon .. "\n" .. name
-    btn.TextColor3 = Color3.fromRGB(120, 120, 130)
+    btn.Text = icon.."\n"..name
+    btn.TextColor3 = Color3.fromRGB(120,120,130)
     btn.TextSize = 9
     btn.Font = Enum.Font.GothamBold
     btn.LayoutOrder = order
 
     local indicator = Instance.new("Frame", btn)
-    indicator.Size = UDim2.new(0.6, 0, 0, 2)
-    indicator.Position = UDim2.new(0.2, 0, 1, -2)
-    indicator.BackgroundColor3 = Color3.fromRGB(110, 60, 255)
+    indicator.Size = UDim2.new(0.6,0,0,2)
+    indicator.Position = UDim2.new(0.2,0,1,-2)
+    indicator.BackgroundColor3 = Color3.fromRGB(110,60,255)
     indicator.BorderSizePixel = 0
     indicator.BackgroundTransparency = 1
-    Instance.new("UICorner", indicator).CornerRadius = UDim.new(1, 0)
+    Instance.new("UICorner", indicator).CornerRadius = UDim.new(1,0)
 
     local page = Instance.new("ScrollingFrame", content)
-    page.Size = UDim2.new(1, 0, 1, 0)
+    page.Size = UDim2.new(1,0,1,0)
     page.BackgroundTransparency = 1
     page.BorderSizePixel = 0
     page.ScrollBarThickness = 2
-    page.ScrollBarImageColor3 = Color3.fromRGB(110, 60, 255)
-    page.CanvasSize = UDim2.new(0, 0, 0, 0)
+    page.ScrollBarImageColor3 = Color3.fromRGB(110,60,255)
+    page.CanvasSize = UDim2.new(0,0,0,0)
     page.AutomaticCanvasSize = Enum.AutomaticSize.Y
     page.Visible = false
 
-    local pageLayout = Instance.new("UIListLayout", page)
-    pageLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    pageLayout.Padding = UDim.new(0, 5)
+    local pl = Instance.new("UIListLayout", page)
+    pl.SortOrder = Enum.SortOrder.LayoutOrder
+    pl.Padding = UDim.new(0,5)
 
-    local pagePad = Instance.new("UIPadding", page)
-    pagePad.PaddingLeft = UDim.new(0, 12)
-    pagePad.PaddingRight = UDim.new(0, 12)
-    pagePad.PaddingTop = UDim.new(0, 8)
-    pagePad.PaddingBottom = UDim.new(0, 10)
+    local pp = Instance.new("UIPadding", page)
+    pp.PaddingLeft = UDim.new(0,12)
+    pp.PaddingRight = UDim.new(0,12)
+    pp.PaddingTop = UDim.new(0,8)
+    pp.PaddingBottom = UDim.new(0,10)
 
-    tabs[name] = { btn = btn, page = page, indicator = indicator }
+    tabs[name] = {btn=btn, page=page, indicator=indicator}
 
     btn.MouseButton1Click:Connect(function()
-        for tName, t in pairs(tabs) do
+        for _, t in pairs(tabs) do
             t.page.Visible = false
-            t.btn.TextColor3 = Color3.fromRGB(120, 120, 130)
-            t.btn.BackgroundColor3 = Color3.fromRGB(32, 32, 36)
+            t.btn.TextColor3 = Color3.fromRGB(120,120,130)
+            t.btn.BackgroundColor3 = Color3.fromRGB(32,32,36)
             t.indicator.BackgroundTransparency = 1
         end
         page.Visible = true
-        btn.TextColor3 = Color3.fromRGB(220, 220, 230)
-        btn.BackgroundColor3 = Color3.fromRGB(40, 38, 50)
+        btn.TextColor3 = Color3.fromRGB(220,220,230)
+        btn.BackgroundColor3 = Color3.fromRGB(40,38,50)
         indicator.BackgroundTransparency = 0
-        activeTab = name
     end)
 
     return page
@@ -198,44 +180,42 @@ local chestsPage  = makeTab("Chests",  "□", 2)
 local farmPage    = makeTab("Farm",    "⚡", 3)
 local playerPage  = makeTab("Player",  "◈", 4)
 
--- activate first tab
 tabs["Rewards"].page.Visible = true
-tabs["Rewards"].btn.TextColor3 = Color3.fromRGB(220, 220, 230)
-tabs["Rewards"].btn.BackgroundColor3 = Color3.fromRGB(40, 38, 50)
+tabs["Rewards"].btn.TextColor3 = Color3.fromRGB(220,220,230)
+tabs["Rewards"].btn.BackgroundColor3 = Color3.fromRGB(40,38,50)
 tabs["Rewards"].indicator.BackgroundTransparency = 0
 
 -- ======== Helpers ========
 local function makeCard(page, order)
     local card = Instance.new("Frame", page)
-    card.Size = UDim2.new(1, 0, 0, 54)
-    card.BackgroundColor3 = Color3.fromRGB(40, 40, 46)
+    card.Size = UDim2.new(1,0,0,54)
+    card.BackgroundColor3 = Color3.fromRGB(40,40,46)
     card.BorderSizePixel = 0
     card.LayoutOrder = order
-    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 8)
+    Instance.new("UICorner", card).CornerRadius = UDim.new(0,8)
     local cs = Instance.new("UIStroke", card)
-    cs.Color = Color3.fromRGB(60, 60, 68)
-    cs.Transparency = 0
+    cs.Color = Color3.fromRGB(60,60,68)
     cs.Thickness = 1
     return card, cs
 end
 
 local function addLabels(card, label, sub)
     local lbl = Instance.new("TextLabel", card)
-    lbl.Size = UDim2.new(0.62, 0, 0, 18)
-    lbl.Position = UDim2.new(0, 12, 0, 9)
+    lbl.Size = UDim2.new(0.62,0,0,18)
+    lbl.Position = UDim2.new(0,12,0,9)
     lbl.BackgroundTransparency = 1
     lbl.Text = label
-    lbl.TextColor3 = Color3.fromRGB(220, 218, 228)
+    lbl.TextColor3 = Color3.fromRGB(220,218,228)
     lbl.TextSize = 12
     lbl.Font = Enum.Font.GothamBold
     lbl.TextXAlignment = Enum.TextXAlignment.Left
 
     local s = Instance.new("TextLabel", card)
-    s.Size = UDim2.new(0.62, 0, 0, 14)
-    s.Position = UDim2.new(0, 12, 0, 30)
+    s.Size = UDim2.new(0.62,0,0,14)
+    s.Position = UDim2.new(0,12,0,30)
     s.BackgroundTransparency = 1
     s.Text = sub
-    s.TextColor3 = Color3.fromRGB(140, 136, 158)
+    s.TextColor3 = Color3.fromRGB(140,136,158)
     s.TextSize = 10
     s.Font = Enum.Font.Gotham
     s.TextXAlignment = Enum.TextXAlignment.Left
@@ -246,23 +226,23 @@ local function makeToggle(page, labelText, subText, order, onEnable, onDisable)
     addLabels(card, labelText, subText)
 
     local sw = Instance.new("Frame", card)
-    sw.Size = UDim2.new(0, 36, 0, 20)
-    sw.Position = UDim2.new(1, -48, 0.5, -10)
-    sw.BackgroundColor3 = Color3.fromRGB(55, 52, 68)
+    sw.Size = UDim2.new(0,36,0,20)
+    sw.Position = UDim2.new(1,-48,0.5,-10)
+    sw.BackgroundColor3 = Color3.fromRGB(55,52,68)
     sw.BorderSizePixel = 0
-    Instance.new("UICorner", sw).CornerRadius = UDim.new(1, 0)
+    Instance.new("UICorner", sw).CornerRadius = UDim.new(1,0)
 
     local thumb = Instance.new("Frame", sw)
-    thumb.Size = UDim2.new(0, 14, 0, 14)
-    thumb.Position = UDim2.new(0, 3, 0.5, -7)
-    thumb.BackgroundColor3 = Color3.fromRGB(140, 136, 158)
+    thumb.Size = UDim2.new(0,14,0,14)
+    thumb.Position = UDim2.new(0,3,0.5,-7)
+    thumb.BackgroundColor3 = Color3.fromRGB(140,136,158)
     thumb.BorderSizePixel = 0
-    Instance.new("UICorner", thumb).CornerRadius = UDim.new(1, 0)
+    Instance.new("UICorner", thumb).CornerRadius = UDim.new(1,0)
 
     states[labelText] = false
 
     local hitbox = Instance.new("TextButton", card)
-    hitbox.Size = UDim2.new(1, 0, 1, 0)
+    hitbox.Size = UDim2.new(1,0,1,0)
     hitbox.BackgroundTransparency = 1
     hitbox.Text = ""
 
@@ -270,7 +250,7 @@ local function makeToggle(page, labelText, subText, order, onEnable, onDisable)
         states[labelText] = not states[labelText]
         local on = states[labelText]
         TweenService:Create(sw, TweenInfo.new(0.15), {
-            BackgroundColor3 = on and Color3.fromRGB(100, 50, 240) or Color3.fromRGB(55, 52, 68)
+            BackgroundColor3 = on and Color3.fromRGB(100,50,240) or Color3.fromRGB(55,52,68)
         }):Play()
         TweenService:Create(thumb, TweenInfo.new(0.15), {
             Position = on and UDim2.new(1,-17,0.5,-7) or UDim2.new(0,3,0.5,-7),
@@ -289,20 +269,20 @@ local function makeButton(page, labelText, subText, order, onClick)
     addLabels(card, labelText, subText)
 
     local btn = Instance.new("TextButton", card)
-    btn.Size = UDim2.new(0, 52, 0, 26)
-    btn.Position = UDim2.new(1, -62, 0.5, -13)
-    btn.BackgroundColor3 = Color3.fromRGB(100, 50, 240)
+    btn.Size = UDim2.new(0,52,0,26)
+    btn.Position = UDim2.new(1,-62,0.5,-13)
+    btn.BackgroundColor3 = Color3.fromRGB(100,50,240)
     btn.TextColor3 = Color3.fromRGB(255,255,255)
     btn.Text = "run"
     btn.TextSize = 11
     btn.Font = Enum.Font.GothamBold
     btn.BorderSizePixel = 0
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0,6)
 
     btn.MouseButton1Click:Connect(function()
         if btn.Text == "..." then return end
         btn.Text = "..."
-        btn.BackgroundColor3 = Color3.fromRGB(55, 50, 80)
+        btn.BackgroundColor3 = Color3.fromRGB(55,50,80)
         task.spawn(function()
             local ok = pcall(onClick)
             btn.Text = ok and "✓" or "✕"
@@ -315,19 +295,7 @@ local function makeButton(page, labelText, subText, order, onClick)
 end
 
 -- ======== REWARDS TAB ========
-makeButton(rewardsPage, "Offline Rewards", "claim รางวัล offline", 1, function()
-    RF.OfflineRewards.ClaimRewards:InvokeServer()
-end)
-
-makeButton(rewardsPage, "Loyalty Roblox", "claim loyalty prize", 2, function()
-    RF.Loyalty.ClaimRobloxPrize:InvokeServer()
-end)
-
-makeButton(rewardsPage, "Loyalty Discord", "claim discord prize", 3, function()
-    RF.Loyalty.ClaimDicordPrize:InvokeServer()
-end)
-
-makeButton(rewardsPage, "Claim UnitDex", "claim gem จากทุก unit", 4, function()
+makeButton(rewardsPage, "Claim UnitDex", "claim gem จากทุก unit", 1, function()
     local Items = require(game.ReplicatedStorage.Systems.Items)
     local unitData = Items:GetCategoryData("Units")
     local dexRF = RF.UnitDex.ClaimUnitReward
@@ -361,14 +329,12 @@ makeToggle(chestsPage, "Auto Collect", "วาร์ปเก็บ chest อั
                 local char = player.Character
                 local root = char and char:FindFirstChild("HumanoidRootPart")
                 if not root then break end
-                root.CFrame = part.CFrame + Vector3.new(0, 3, 0)
+                root.CFrame = part.CFrame + Vector3.new(0,3,0)
                 task.wait(0.6)
                 pcall(function()
                     game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.E, false, game)
                     for _, obj in ipairs(part:GetDescendants()) do
-                        if obj:IsA("ProximityPrompt") then
-                            pcall(fireproximityprompt, obj)
-                        end
+                        if obj:IsA("ProximityPrompt") then pcall(fireproximityprompt, obj) end
                     end
                     task.wait(0.5)
                     game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.E, false, game)
@@ -387,7 +353,8 @@ end)
 -- ======== FARM TAB ========
 makeToggle(farmPage, "Auto Claim Quest", "claim quest วนอัตโนมัติ", 1, function()
     while states["Auto Claim Quest"] do
-        for i = 1, 10 do
+        -- วนหา quest id 1-20 ที่ claim ได้
+        for i = 1, 20 do
             if not states["Auto Claim Quest"] then break end
             pcall(function() RF.Quests.ClaimQuest:InvokeServer(i) end)
             task.wait(0.3)
@@ -413,8 +380,7 @@ end)
 makeToggle(farmPage, "Auto Vote Next", "โหวต next หลังจบด่าน", 4, function()
     local voteRE = game.ReplicatedStorage.Systems.Voting.Vote
     while states["Auto Vote Next"] do
-        local timer = game.ReplicatedStorage:GetAttribute("RoundEndTimer")
-        if timer ~= nil then
+        if game.ReplicatedStorage:GetAttribute("RoundEndTimer") ~= nil then
             pcall(function() voteRE:FireServer("Next") end)
             task.wait(18)
         end
@@ -425,8 +391,7 @@ end)
 makeToggle(farmPage, "Auto Vote Retry", "โหวต retry หลังจบด่าน", 5, function()
     local voteRE = game.ReplicatedStorage.Systems.Voting.Vote
     while states["Auto Vote Retry"] do
-        local timer = game.ReplicatedStorage:GetAttribute("RoundEndTimer")
-        if timer ~= nil then
+        if game.ReplicatedStorage:GetAttribute("RoundEndTimer") ~= nil then
             pcall(function() voteRE:FireServer("Retry") end)
             task.wait(18)
         end
