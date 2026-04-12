@@ -1,14 +1,15 @@
 -- Senzy Hub | Fluent Edition
 -- Optimized for Xeno / Delta / Wave
--- Credits: Senzy & VOXY Logic
+-- Credits: Senzy
 
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
 local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
 
+--สร้างหน้าต่างหลัก
 local Window = Fluent:CreateWindow({
     Title = "SENZY HUB",
-    SubTitle = "Anime Discovery | Full Functions",
+    SubTitle = "Anime Discovery | Fix Version",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
     Acrylic = true,
@@ -40,29 +41,22 @@ Tabs.Main:AddButton({
     end
 })
 
--- ======== [ CHESTS (มาแล้ว!) ] ========
-local AutoCollect = Tabs.Chests:AddToggle("AutoCollect", {Title = "Auto Collect Chests", Default = false, Description = "วาร์ปเก็บกล่องอัตโนมัติ"})
+-- ======== [ CHESTS ] ========
+local AutoCollect = Tabs.Chests:AddToggle("AutoCollect", {Title = "Auto Collect Chests", Default = false})
 AutoCollect:OnChanged(function()
     task.spawn(function()
         while Options.AutoCollect.Value do
             local ok, bonusChests = pcall(function() return workspace.Map.BonusChests end)
             if ok and bonusChests then
-                local parts = {}
-                for _, c in ipairs(bonusChests:GetChildren()) do
-                    if c:IsA("BasePart") then table.insert(parts, c) end
-                end
-                
-                for _, part in ipairs(parts) do
+                for _, part in ipairs(bonusChests:GetChildren()) do
                     if not Options.AutoCollect.Value then break end
-                    local char = game.Players.LocalPlayer.Character
-                    local root = char and char:FindFirstChild("HumanoidRootPart")
-                    if root and part.Parent then
-                        root.CFrame = part.CFrame + Vector3.new(0, 3, 0)
-                        task.wait(0.5)
-                        pcall(function()
-                            fireproximityprompt(part:FindFirstChildOfClass("ProximityPrompt") or part:FindFirstChild("ProximityPrompt", true))
-                        end)
-                        task.wait(0.5)
+                    if part:IsA("BasePart") then
+                        local root = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                        if root then
+                            root.CFrame = part.CFrame + Vector3.new(0, 3, 0)
+                            task.wait(0.5)
+                            pcall(function() fireproximityprompt(part:FindFirstChildOfClass("ProximityPrompt") or part:FindFirstChild("ProximityPrompt", true)) end)
+                        end
                     end
                 end
             end
@@ -75,7 +69,7 @@ end)
 Tabs.Farm:AddToggle("AutoClaimQuest", {Title = "Auto Claim Quest", Default = false}):OnChanged(function()
     task.spawn(function()
         while Options.AutoClaimQuest.Value do
-            for i = 1, 20 do
+            for i = 1, 25 do
                 if not Options.AutoClaimQuest.Value then break end
                 pcall(function() game.ReplicatedStorage.Systems.Quests.ClaimQuest:InvokeServer(i) end)
                 task.wait(0.3)
@@ -94,22 +88,47 @@ Tabs.Farm:AddToggle("AutoWave", {Title = "Auto Sweep Wave", Default = false}):On
     end)
 end)
 
--- แก้ไข AUTO VOTE NEXT (ตัวปัญหา)
+Tabs.Farm:AddToggle("AutoQueue", {Title = "Auto Queue", Default = false}):OnChanged(function()
+    task.spawn(function()
+        while Options.AutoQueue.Value do
+            pcall(function() game.ReplicatedStorage.Systems.Queue.RequestEnterQueue:InvokeServer() end)
+            task.wait(5)
+        end
+    end)
+end)
+
+-- แก้ไข VOTE NEXT & RETRY (Logic แบบเดี่ยว ไม่รัวเกินไป)
 local AutoVoteNext = Tabs.Farm:AddToggle("AutoVoteNext", {Title = "Auto Vote Next", Default = false})
 AutoVoteNext:OnChanged(function()
     task.spawn(function()
-        local voteRE = game.ReplicatedStorage:WaitForChild("Systems"):WaitForChild("Voting"):WaitForChild("Vote")
         local voted = false
         while Options.AutoVoteNext.Value do
             local timer = game.ReplicatedStorage:GetAttribute("RoundEndTimer")
             if timer ~= nil then
                 if not voted then
-                    pcall(function() voteRE:FireServer("Next") end)
-                    print("✅ Voted Next")
+                    pcall(function() game.ReplicatedStorage.Systems.Voting.Vote:FireServer("Next") end)
                     voted = true
                 end
             else
-                voted = false -- Reset เมื่อเริ่มด่านใหม่
+                voted = false
+            end
+            task.wait(1)
+        end
+    end)
+end)
+
+Tabs.Farm:AddToggle("AutoVoteRetry", {Title = "Auto Vote Retry", Default = false}):OnChanged(function()
+    task.spawn(function()
+        local voted = false
+        while Options.AutoVoteRetry.Value do
+            local timer = game.ReplicatedStorage:GetAttribute("RoundEndTimer")
+            if timer ~= nil then
+                if not voted then
+                    pcall(function() game.ReplicatedStorage.Systems.Voting.Vote:FireServer("Retry") end)
+                    voted = true
+                end
+            else
+                voted = false
             end
             task.wait(1)
         end
@@ -121,9 +140,15 @@ Tabs.Player:AddSlider("WS", {Title = "WalkSpeed", Default = 16, Min = 16, Max = 
     pcall(function() game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = v end)
 end})
 
--- ======== [ SETTINGS ] ========
+-- ======== [ สิ้นสุดสคริปต์ (ห้ามลบ) ] ========
 SaveManager:SetLibrary(Fluent)
 InterfaceManager:SetLibrary(Fluent)
 InterfaceManager:BuildInterfaceSection(Tabs.Settings)
 SaveManager:BuildConfigSection(Tabs.Settings)
+
 Window:SelectTab(1)
+Fluent:Notify({
+    Title = "Senzy Hub Loaded",
+    Content = "ปุ่มเปิด/ปิดคือ Left Control",
+    Duration = 5
+})
