@@ -11,11 +11,8 @@ local RF = game.ReplicatedStorage.Systems
 
 if playerGui:FindFirstChild("SenzyHub") then playerGui.SenzyHub:Destroy() end
 
--- state
 local states = {}
-local loops = {}
 
--- ======== GUI ========
 local sg = Instance.new("ScreenGui", playerGui)
 sg.Name = "SenzyHub"
 sg.ResetOnSpawn = false
@@ -41,7 +38,6 @@ accent.BackgroundColor3 = Color3.fromRGB(130, 90, 255)
 accent.BorderSizePixel = 0
 Instance.new("UICorner", accent).CornerRadius = UDim.new(1, 0)
 
--- header
 local header = Instance.new("Frame", main)
 header.Size = UDim2.new(1, 0, 0, 52)
 header.BackgroundTransparency = 1
@@ -89,7 +85,7 @@ closeBtn.Font = Enum.Font.GothamBold
 closeBtn.BorderSizePixel = 0
 Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(1, 0)
 closeBtn.MouseButton1Click:Connect(function()
-    for k, _ in pairs(states) do states[k] = false end
+    for k in pairs(states) do states[k] = false end
     sg:Destroy()
 end)
 
@@ -100,7 +96,6 @@ div.BackgroundColor3 = Color3.fromRGB(255,255,255)
 div.BackgroundTransparency = 0.92
 div.BorderSizePixel = 0
 
--- scroll
 local scroll = Instance.new("ScrollingFrame", main)
 scroll.Size = UDim2.new(1, 0, 1, -62)
 scroll.Position = UDim2.new(0, 0, 0, 58)
@@ -121,7 +116,6 @@ pad.PaddingRight = UDim.new(0, 14)
 pad.PaddingTop = UDim.new(0, 8)
 pad.PaddingBottom = UDim.new(0, 8)
 
--- footer
 local footer = Instance.new("TextLabel", main)
 footer.Size = UDim2.new(1, -28, 0, 18)
 footer.Position = UDim2.new(0, 14, 1, -22)
@@ -133,7 +127,7 @@ footer.TextSize = 10
 footer.Font = Enum.Font.Gotham
 footer.TextXAlignment = Enum.TextXAlignment.Center
 
--- ======== Helper ========
+-- ======== Helpers ========
 local function makeSection(parent, labelText, order)
     local lbl = Instance.new("TextLabel", parent)
     lbl.Size = UDim2.new(1, 0, 0, 22)
@@ -189,8 +183,7 @@ local function makeToggle(parent, labelText, subText, order, onEnable, onDisable
     thumb.BorderSizePixel = 0
     Instance.new("UICorner", thumb).CornerRadius = UDim.new(1, 0)
 
-    local key = labelText
-    states[key] = false
+    states[labelText] = false
 
     local btn = Instance.new("TextButton", card)
     btn.Size = UDim2.new(1, 0, 1, 0)
@@ -198,8 +191,8 @@ local function makeToggle(parent, labelText, subText, order, onEnable, onDisable
     btn.Text = ""
 
     btn.MouseButton1Click:Connect(function()
-        states[key] = not states[key]
-        local on = states[key]
+        states[labelText] = not states[labelText]
+        local on = states[labelText]
         TweenService:Create(sw, TweenInfo.new(0.2), {
             BackgroundColor3 = on and Color3.fromRGB(130,90,255) or Color3.fromRGB(35,35,55)
         }):Play()
@@ -207,14 +200,9 @@ local function makeToggle(parent, labelText, subText, order, onEnable, onDisable
             Position = on and UDim2.new(1,-17,0.5,-7) or UDim2.new(0,3,0.5,-7),
             BackgroundColor3 = on and Color3.fromRGB(255,255,255) or Color3.fromRGB(80,80,100)
         }):Play()
-        if on then
-            task.spawn(onEnable)
-        else
-            if onDisable then onDisable() end
-        end
+        if on then task.spawn(onEnable)
+        elseif onDisable then onDisable() end
     end)
-
-    return card
 end
 
 local function makeButton(parent, labelText, subText, order, onClick)
@@ -260,18 +248,13 @@ local function makeButton(parent, labelText, subText, order, onClick)
     btn.MouseButton1Click:Connect(function()
         btn.Text = "..."
         btn.BackgroundColor3 = Color3.fromRGB(60,60,80)
-        local ok, res = pcall(onClick)
+        local ok = pcall(onClick)
         task.wait(0.3)
-        if ok then
-            btn.Text = "✓"
-            btn.BackgroundColor3 = Color3.fromRGB(50, 180, 100)
-        else
-            btn.Text = "✕"
-            btn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
-        end
+        btn.Text = ok and "✓" or "✕"
+        btn.BackgroundColor3 = ok and Color3.fromRGB(50,180,100) or Color3.fromRGB(200,60,60)
         task.wait(1.5)
         btn.Text = "claim"
-        btn.BackgroundColor3 = Color3.fromRGB(130, 90, 255)
+        btn.BackgroundColor3 = Color3.fromRGB(130,90,255)
     end)
 end
 
@@ -292,178 +275,129 @@ makeButton(scroll, "Loyalty Discord", "claim discord prize", 4, function()
     RF.Loyalty.ClaimDicordPrize:InvokeServer()
 end)
 
-local RF = game.ReplicatedStorage.Systems.UnitDex.ClaimUnitReward
-local Items = require(game.ReplicatedStorage.Systems.Items)
-local unitData = Items:GetCategoryData("Units")
+makeButton(scroll, "Claim UnitDex", "claim gem จากทุก unit", 5, function()
+    task.spawn(function()
+        local Items = require(game.ReplicatedStorage.Systems.Items)
+        local unitData = Items:GetCategoryData("Units")
+        local dexRF = RF.UnitDex.ClaimUnitReward
 
-local function closePopup()
-    for _, gui in ipairs(game.Players.LocalPlayer.PlayerGui:GetDescendants()) do
-        if gui:IsA("TextButton") then
-            -- ลองทุกปุ่มที่อาจเป็น close/claim
-            if gui.Text == "Claim!" or gui.Text == "Claim" 
-            or gui.Text == "X" or gui.Text == "✕" 
-            or gui.Text == "Close" or gui.BackgroundColor3 == Color3.fromRGB(255, 0, 0)
-            or gui.BackgroundColor3 == Color3.fromRGB(220, 50, 50) then
-                pcall(function() gui.MouseButton1Click:Fire() end)
+        for unitName in pairs(unitData) do
+            pcall(function() dexRF:InvokeServer(unitName) end)
+            task.wait(0.1)
+            -- ปิด popup
+            for _, gui in ipairs(playerGui:GetDescendants()) do
+                if gui:IsA("TextButton") and (gui.Text == "Claim!" or gui.Text == "Claim") then
+                    pcall(function() gui.MouseButton1Click:Fire() end)
+                end
+                if (gui:IsA("Frame") or gui:IsA("ImageButton")) and gui.Visible
+                and gui.AbsoluteSize.X > 200 and gui.AbsoluteSize.X < 500 then
+                    pcall(function() gui.Visible = false end)
+                end
             end
+            task.wait(0.1)
         end
-        -- ลองซ่อน frame ที่เป็น popup ตรงๆ
-        if gui:IsA("Frame") or gui:IsA("ImageButton") then
-            if gui.Visible and gui.AbsoluteSize.X > 200 and gui.AbsoluteSize.X < 500 then
-                pcall(function() gui.Visible = false end)
-            end
-        end
-    end
-end
-
-local success = 0
-
-for unitName, _ in pairs(unitData) do
-    pcall(function()
-        RF:InvokeServer(unitName)
+        print("✅ UnitDex claim ครบ!")
     end)
-    success += 1
-    task.wait(0.15)
-    closePopup()
-    task.wait(0.15)
-    print("✅ " .. unitName)
-end
+end)
 
-print("✅ ครบ " .. success .. " unit!")
 -- CHESTS
-makeToggle(scroll, "Auto Collect", "วาร์ปเก็บ chest อัตโนมัติ", 7,
-    function()
-        local bonusChests = workspace.Map.BonusChests
-        while states["Auto Collect"] do
-            local parts = {}
-            for _, c in ipairs(bonusChests:GetChildren()) do
-                if c:IsA("BasePart") then table.insert(parts, c) end
-            end
-            
-            if #parts == 0 then
-                task.wait(1)
-            else
-                for _, part in ipairs(parts) do
-                    if not states["Auto Collect"] then break end
-                    
-                    -- ตรวจสอบว่ากล่องยังอยู่ไหมก่อนจะทำ (ป้องกันการวาร์ปซ้ำที่ที่ว่าง)
-                    if not part or not part.Parent then continue end
+makeSection(scroll, "— chests", 6)
 
-                    local char = player.Character
-                    local root = char and char:FindFirstChild("HumanoidRootPart")
-                    if not root then break end
-                    
-                    -- 1. วาร์ปไปที่หีบ
-                    root.CFrame = part.CFrame + Vector3.new(0, 3, 0)
-                    task.wait(0.8) -- รอให้เซิร์ฟเวอร์รู้ว่าเราถึงแล้ว
-                    
-                    -- 2. เริ่มกระบวนการกดเปิด
-                    pcall(function()
-                        -- กด E ค้าง
-                        game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.E, false, game)
-                        
-                        -- ลองใช้ fireproximityprompt ควบคู่ไปด้วยเพื่อให้ชัวร์
-                        for _, obj in ipairs(part:GetDescendants()) do
-                            if obj:IsA("ProximityPrompt") then
-                                pcall(fireproximityprompt, obj)
-                            end
+makeToggle(scroll, "Auto Collect", "วาร์ปเก็บ chest อัตโนมัติ", 7, function()
+    local bonusChests = workspace.Map.BonusChests
+    while states["Auto Collect"] do
+        local parts = {}
+        for _, c in ipairs(bonusChests:GetChildren()) do
+            if c:IsA("BasePart") then table.insert(parts, c) end
+        end
+        if #parts == 0 then
+            task.wait(5)
+        else
+            for _, part in ipairs(parts) do
+                if not states["Auto Collect"] then break end
+                if not part or not part.Parent then continue end
+                local char = player.Character
+                local root = char and char:FindFirstChild("HumanoidRootPart")
+                if not root then break end
+                root.CFrame = part.CFrame + Vector3.new(0, 3, 0)
+                task.wait(0.8)
+                pcall(function()
+                    game:GetService("VirtualInputManager"):SendKeyEvent(true, Enum.KeyCode.E, false, game)
+                    for _, obj in ipairs(part:GetDescendants()) do
+                        if obj:IsA("ProximityPrompt") then
+                            pcall(fireproximityprompt, obj)
                         end
-
-                        task.wait(0.8) -- ระยะเวลากด E ค้าง (0.8 ตามที่ขอ)
-                        
-                        -- ปล่อย E
-                        game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.E, false, game)
-                    end)
-
-                    -- 3. [จุดสำคัญ] รอให้กล่องหายไปก่อนค่อยไปต่อ
-                    -- ถ้ากล่องยังอยู่ แสดงว่ายังเก็บไม่เสร็จ ให้รออีกนิด
-                    local retry = 0
-                    while part and part.Parent and retry < 5 do
-                        task.wait(0.3)
-                        retry = retry + 1
                     end
-                    
-                    -- 4. Cooldown ท้ายลูป ป้องกันการวาร์ปรัวจนโดนเตะ
-                    task.wait(1.2) 
+                    task.wait(0.5)
+                    game:GetService("VirtualInputManager"):SendKeyEvent(false, Enum.KeyCode.E, false, game)
+                end)
+                local retry = 0
+                while part and part.Parent and retry < 5 do
+                    task.wait(0.3)
+                    retry += 1
                 end
+                task.wait(0.5)
             end
         end
     end
-)
+end)
+
 -- QUESTS
-makeToggle(scroll, "Auto Claim Quest", "claim quest วนอัตโนมัติ", 9,
-    function()
-        while states["Auto Claim Quest"] do
-            pcall(function()
-                for i = 1, 10 do
-                    if not states["Auto Claim Quest"] then break end
-                    RF.Quests.ClaimQuest:InvokeServer(i)
-                    task.wait(0.2) -- พักนิดนึงป้องกันเซิร์ฟเวอร์เตะ
-                end
-            end)
-            task.wait(5) -- รอ 5 วินาทีค่อยเช็ครับใหม่ยกแผง
+makeSection(scroll, "— quests", 8)
+
+makeToggle(scroll, "Auto Claim Quest", "claim quest วนอัตโนมัติ", 9, function()
+    while states["Auto Claim Quest"] do
+        for i = 1, 10 do
+            if not states["Auto Claim Quest"] then break end
+            pcall(function() RF.Quests.ClaimQuest:InvokeServer(i) end)
+            task.wait(0.2)
         end
+        task.wait(5)
     end
-)
+end)
+
 -- FARM
 makeSection(scroll, "— farm", 10)
 
-makeToggle(scroll, "Auto Wave", "sweep wave อัตโนมัติ", 11,
-    function()
-        while states["Auto Wave"] do
-            pcall(function() RF.Sweeps.SweepWave:InvokeServer() end)
-            task.wait(3)
-        end
+makeToggle(scroll, "Auto Wave", "sweep wave อัตโนมัติ", 11, function()
+    while states["Auto Wave"] do
+        pcall(function() RF.Sweeps.SweepWave:InvokeServer() end)
+        task.wait(3)
     end
-)
+end)
 
-makeToggle(scroll, "Auto Queue", "เข้า queue อัตโนมัติ", 12,
-    function()
-        while states["Auto Queue"] do
-            pcall(function() RF.Queue.RequestEnterQueue:InvokeServer() end)
-            task.wait(5)
-        end
+makeToggle(scroll, "Auto Queue", "เข้า queue อัตโนมัติ", 12, function()
+    while states["Auto Queue"] do
+        pcall(function() RF.Queue.RequestEnterQueue:InvokeServer() end)
+        task.wait(5)
     end
-)
+end)
 
 -- PLAYER
 makeSection(scroll, "— player", 13)
 
-makeToggle(scroll, "Speed Hack", "walkspeed x3", 14,
-    function()
-        while states["Speed Hack"] do
-            local char = player.Character
-            if char then
-                local hum = char:FindFirstChild("Humanoid")
-                if hum then hum.WalkSpeed = 48 end
-            end
-            task.wait(0.5)
-        end
+makeToggle(scroll, "Speed Hack", "walkspeed x3", 14, function()
+    while states["Speed Hack"] do
         local char = player.Character
-        if char then
-            local hum = char:FindFirstChild("Humanoid")
-            if hum then hum.WalkSpeed = 16 end
-        end
+        local hum = char and char:FindFirstChild("Humanoid")
+        if hum then hum.WalkSpeed = 48 end
+        task.wait(0.5)
     end
-)
+    local char = player.Character
+    local hum = char and char:FindFirstChild("Humanoid")
+    if hum then hum.WalkSpeed = 16 end
+end)
 
-makeToggle(scroll, "Infinite Jump", "กระโดดได้ไม่จำกัด", 15,
-    function()
-        local conn
-        conn = UserInputService.JumpRequest:Connect(function()
-            if not states["Infinite Jump"] then
-                conn:Disconnect()
-                return
-            end
-            local char = player.Character
-            if char then
-                local hum = char:FindFirstChild("Humanoid")
-                if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
-            end
-        end)
-        while states["Infinite Jump"] do task.wait(1) end
-        conn:Disconnect()
-    end
-)
+makeToggle(scroll, "Infinite Jump", "กระโดดได้ไม่จำกัด", 15, function()
+    local conn
+    conn = UserInputService.JumpRequest:Connect(function()
+        if not states["Infinite Jump"] then conn:Disconnect() return end
+        local char = player.Character
+        local hum = char and char:FindFirstChild("Humanoid")
+        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+    end)
+    while states["Infinite Jump"] do task.wait(1) end
+    conn:Disconnect()
+end)
 
 print("senzy hub loaded ✅")
