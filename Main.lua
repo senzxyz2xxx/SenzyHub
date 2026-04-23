@@ -1,15 +1,10 @@
--- Senzy Hub | Fluent Edition
--- Optimized for Xeno / Delta / Wave
--- Credits: Senzy
-
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
 local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
 
---สร้างหน้าต่างหลัก
 local Window = Fluent:CreateWindow({
     Title = "SENZY HUB",
-    SubTitle = "Summon Heroes | Fix Version",
+    SubTitle = "Auto Farm Edition",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
     Acrylic = true,
@@ -18,129 +13,100 @@ local Window = Fluent:CreateWindow({
 })
 
 local Tabs = {
-    Main = Window:AddTab({ Title = "Rewards", Icon = "star" }),
-    Chests = Window:AddTab({ Title = "Chests", Icon = "box" }),
     Farm = Window:AddTab({ Title = "Farm", Icon = "zap" }),
-    Player = Window:AddTab({ Title = "Player", Icon = "user" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
 
 local Options = Fluent.Options
+local TweenService = game:GetService("TweenService")
+local Player = game.Players.LocalPlayer
 
--- ======== [ REWARDS ] ========
-Tabs.Main:AddButton({
-    Title = "Claim UnitDex",
-    Description = "",
-    Callback = function()
-        local Items = require(game.ReplicatedStorage.Systems.Items)
-        local unitData = Items:GetCategoryData("Units")
-        for unitName in pairs(unitData) do
-            pcall(function() game.ReplicatedStorage.Systems.UnitDex.ClaimUnitReward:InvokeServer(unitName) end)
-            task.wait(0.1)
+-- ======== [ ฟังก์ชั่นหาชื่อมอนสเตอร์ใน Folder ] ========
+local function GetMonsterList()
+    local List = {}
+    -- เปลี่ยน Path ตรงนี้ให้ตรงกับในเกม (เช่น workspace.Client.Enemies)
+    local Success, Enemies = pcall(function() return workspace.Client.Enemies:GetChildren() end)
+    if Success then
+        for _, v in pairs(Enemies) do
+            if v:IsA("Model") and not table.find(List, v.Name) then
+                table.insert(List, v.Name)
+            end
         end
+    end
+    return List
+end
+
+-- ======== [ FARM TAB ] ========
+
+-- Dropdown สำหรับเลือกมอนสเตอร์
+local MonsterDropdown = Tabs.Farm:AddDropdown("SelectedMonster", {
+    Title = "Select Monster",
+    Values = GetMonsterList(),
+    Multi = false,
+    Default = 1,
+})
+
+-- ปุ่มกด Refresh รายชื่อมอนสเตอร์
+Tabs.Farm:AddButton({
+    Title = "Refresh Monster List",
+    Callback = function()
+        MonsterDropdown:SetValues(GetMonsterList())
     end
 })
 
--- ======== [ CHESTS ] ========
-local AutoCollect = Tabs.Chests:AddToggle("AutoCollect", {Title = "Auto Collect Chests", Default = false})
-AutoCollect:OnChanged(function()
-    task.spawn(function()
-        while Options.AutoCollect.Value do
-            local ok, bonusChests = pcall(function() return workspace.Map.BonusChests end)
-            if ok and bonusChests then
-                for _, part in ipairs(bonusChests:GetChildren()) do
-                    if not Options.AutoCollect.Value then break end
-                    if part:IsA("BasePart") then
-                        local root = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                        if root then
-                            root.CFrame = part.CFrame + Vector3.new(0, 3, 0)
-                            task.wait(0.5)
-                            pcall(function() fireproximityprompt(part:FindFirstChildOfClass("ProximityPrompt") or part:FindFirstChild("ProximityPrompt", true)) end)
+-- Toggle เปิด/ปิดฟาร์ม
+local AutoFarmTween = Tabs.Farm:AddToggle("AutoFarmTween", {Title = "Auto Farm (Tween)", Default = false})
+
+-- ======== [ LOGIC AUTO FARM ] ========
+task.spawn(function()
+    while true do
+        task.wait(0.1)
+        if Options.AutoFarmTween.Value and Options.SelectedMonster.Value ~= "" then
+            pcall(function()
+                local TargetName = Options.SelectedMonster.Value
+                local EnemyFolder = workspace.Client.Enemies
+                local Character = Player.Character
+                local Root = Character and Character:FindFirstChild("HumanoidRootPart")
+                
+                if Root then
+                    -- ค้นหามอนสเตอร์ที่ใกล้ที่สุดตามชื่อที่เลือก
+                    local Target = nil
+                    local MaxDist = math.huge
+                    
+                    for _, v in pairs(EnemyFolder:GetChildren()) do
+                        if v.Name == TargetName and v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+                            local Dist = (Root.Position - v.HumanoidRootPart.Position).Magnitude
+                            if Dist < MaxDist then
+                                MaxDist = Dist
+                                Target = v
+                            end
                         end
                     end
+                    
+                    if Target then
+                        -- ระบบ Tween เคลื่อนที่
+                        local TweenSpeed = 100 -- ปรับความเร็วได้
+                        local Distance = (Root.Position - Target.HumanoidRootPart.Position).Magnitude
+                        local Info = TweenInfo.new(Distance / TweenSpeed, Enum.EasingStyle.Linear)
+                        
+                        -- วาร์ปไปตำแหน่งเหนือมอนสเตอร์ 5 หน่วย
+                        local Tween = TweenService:Create(Root, Info, {
+                            CFrame = Target.HumanoidRootPart.CFrame * CFrame.new(0, 5, 0)
+                        })
+                        Tween:Play()
+                        
+                        -- รอจนกว่าจะถึง หรือเป้าหมายตาย หรือปิด Toggle
+                        repeat task.wait() 
+                        until not Options.AutoFarmTween.Value or not Target or Target.Humanoid.Health <= 0 or (Root.Position - (Target.HumanoidRootPart.Position + Vector3.new(0,5,0))).Magnitude < 2
+                        Tween:Cancel()
+                    end
                 end
-            end
-            task.wait(2)
+            end)
         end
-    end)
+    end
 end)
 
--- ======== [ FARM ] ========
-Tabs.Farm:AddToggle("AutoClaimQuest", {Title = "Auto Claim Quest", Default = false}):OnChanged(function()
-    task.spawn(function()
-        while Options.AutoClaimQuest.Value do
-            for i = 1, 25 do
-                if not Options.AutoClaimQuest.Value then break end
-                pcall(function() game.ReplicatedStorage.Systems.Quests.ClaimQuest:InvokeServer(i) end)
-                task.wait(0.3)
-            end
-            task.wait(5)
-        end
-    end)
-end)
-
-Tabs.Farm:AddToggle("AutoWave", {Title = "Auto Sweep Wave", Default = false}):OnChanged(function()
-    task.spawn(function()
-        while Options.AutoWave.Value do
-            pcall(function() game.ReplicatedStorage.Systems.Sweeps.SweepWave:InvokeServer() end)
-            task.wait(3)
-        end
-    end)
-end)
-
-Tabs.Farm:AddToggle("AutoQueue", {Title = "Auto Queue", Default = false}):OnChanged(function()
-    task.spawn(function()
-        while Options.AutoQueue.Value do
-            pcall(function() game.ReplicatedStorage.Systems.Queue.RequestEnterQueue:InvokeServer() end)
-            task.wait(5)
-        end
-    end)
-end)
-
--- แก้ไข VOTE NEXT & RETRY (Logic แบบเดี่ยว ไม่รัวเกินไป)
-local AutoVoteNext = Tabs.Farm:AddToggle("AutoVoteNext", {Title = "Auto Vote Next", Default = false})
-AutoVoteNext:OnChanged(function()
-    task.spawn(function()
-        local voted = false
-        while Options.AutoVoteNext.Value do
-            local timer = game.ReplicatedStorage:GetAttribute("RoundEndTimer")
-            if timer ~= nil then
-                if not voted then
-                    pcall(function() game.ReplicatedStorage.Systems.Voting.Vote:FireServer("Next") end)
-                    voted = true
-                end
-            else
-                voted = false
-            end
-            task.wait(1)
-        end
-    end)
-end)
-
-Tabs.Farm:AddToggle("AutoVoteRetry", {Title = "Auto Vote Retry", Default = false}):OnChanged(function()
-    task.spawn(function()
-        local voted = false
-        while Options.AutoVoteRetry.Value do
-            local timer = game.ReplicatedStorage:GetAttribute("RoundEndTimer")
-            if timer ~= nil then
-                if not voted then
-                    pcall(function() game.ReplicatedStorage.Systems.Voting.Vote:FireServer("Retry") end)
-                    voted = true
-                end
-            else
-                voted = false
-            end
-            task.wait(1)
-        end
-    end)
-end)
-
--- ======== [ PLAYER ] ========
-Tabs.Player:AddSlider("WS", {Title = "WalkSpeed", Default = 16, Min = 16, Max = 150, Rounding = 1, Callback = function(v)
-    pcall(function() game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = v end)
-end})
-
--- ======== [ สิ้นสุดสคริปต์ (ห้ามลบ) ] ========
+-- ======== [ สิ้นสุดสคริปต์ ] ========
 SaveManager:SetLibrary(Fluent)
 InterfaceManager:SetLibrary(Fluent)
 InterfaceManager:BuildInterfaceSection(Tabs.Settings)
@@ -148,7 +114,7 @@ SaveManager:BuildConfigSection(Tabs.Settings)
 
 Window:SelectTab(1)
 Fluent:Notify({
-    Title = "Senzy Hub Loaded",
-    Content = "ปุ่มเปิด/ปิดคือ Left Control",
+    Title = "Senzy Hub",
+    Content = "Professional Farm System Loaded!",
     Duration = 5
 })
