@@ -9,7 +9,7 @@ local Window = Fluent:CreateWindow({
 })
 
 local Tabs = {
-	Farm = Window:AddTab({ Title = "Farm", Icon = "zap" })
+	Farm = Window:AddTab({ Title = "Auto", Icon = "zap" })
 }
 
 local Options = Fluent.Options
