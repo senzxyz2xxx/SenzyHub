@@ -1,3 +1,11 @@
+local CoreGui = game:GetService("CoreGui")
+
+-- ====== บันทึก GUI ที่มีอยู่ก่อน (ก่อนโหลด Fluent) ======
+local existingGuis = {}
+for _, g in pairs(CoreGui:GetChildren()) do
+	existingGuis[g] = true
+end
+
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
@@ -14,18 +22,23 @@ local Tabs = {
 
 local Options = Fluent.Options
 
--- ====== ไอคอนลอยสำหรับเปิด/ปิด UI ======
-local CoreGui = game:GetService("CoreGui")
+task.wait(0.5) -- รอให้ Fluent สร้าง GUI เสร็จสมบูรณ์ก่อน
 
--- หา ScreenGui ของ Fluent ที่เพิ่งถูกสร้างขึ้นมาจริงๆ
+-- ====== หา GUI ตัวใหม่ที่เพิ่งโผล่มา (คือของ Fluent) ======
 local fluentGui = nil
 for _, g in pairs(CoreGui:GetChildren()) do
-	if g:IsA("ScreenGui") and g.Name:lower():find("fluent") then
+	if g:IsA("ScreenGui") and not existingGuis[g] then
 		fluentGui = g
+		print("เจอ Fluent GUI ชื่อ:", g.Name)
 		break
 	end
 end
 
+if not fluentGui then
+	warn("ยังหา Fluent GUI ไม่เจอ อาจจะสร้างช้ากว่านี้ ลองเพิ่ม task.wait()")
+end
+
+-- ====== ไอคอนลอยสำหรับเปิด/ปิด UI ======
 local IconGui = Instance.new("ScreenGui")
 IconGui.Name = "SenzyIcon"
 IconGui.ResetOnSpawn = false
@@ -37,26 +50,35 @@ IconButton.Size = UDim2.fromOffset(50, 50)
 IconButton.Position = UDim2.fromOffset(20, 100)
 IconButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 IconButton.BackgroundTransparency = 0.1
-IconButton.Image = "rbxassetid://7733960981" -- เปลี่ยนเป็นไอคอนที่ชอบได้
+IconButton.Image = "rbxassetid://7733960981"
 IconButton.ImageColor3 = Color3.fromRGB(255, 255, 255)
 IconButton.AutoButtonColor = true
-IconButton.Draggable = true -- ลากขยับตำแหน่งได้
+IconButton.Draggable = true
 IconButton.Active = true
 IconButton.Parent = IconGui
 
 local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(1, 0) -- กลม
+corner.CornerRadius = UDim.new(1, 0)
 corner.Parent = IconButton
 
 local uiVisible = true
 
 IconButton.MouseButton1Click:Connect(function()
 	uiVisible = not uiVisible
+	print("กดไอคอน, uiVisible:", uiVisible, "| fluentGui:", fluentGui)
 
 	if fluentGui then
 		fluentGui.Enabled = uiVisible
 	else
-		warn("หา Fluent GUI ไม่เจอ ลอง print ชื่อ CoreGui children เพื่อเช็คชื่อจริง")
+		-- ถ้ายังไม่เจอ ลองหาใหม่อีกรอบตอนกด
+		for _, g in pairs(CoreGui:GetChildren()) do
+			if g:IsA("ScreenGui") and not existingGuis[g] and g.Name ~= "SenzyIcon" then
+				fluentGui = g
+				fluentGui.Enabled = uiVisible
+				print("เจอตอนกด:", g.Name)
+				break
+			end
+		end
 	end
 end)
 
@@ -105,7 +127,6 @@ local function stopAutoWalk()
 	end
 end
 
--- ====== ปุ่ม Toggle ใน UI ======
 local AutoWalkToggle = Tabs.Farm:AddToggle("AutoWalkToggle", {
 	Title = "Auto Walk to ReadyZone",
 	Description = "เดินไปที่ New Lobby > ReadyArea > ReadyZone อัตโนมัติ",
