@@ -2,7 +2,7 @@ local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/
 
 local Window = Fluent:CreateWindow({
 	Title = "SENZY HUB",
-	SubTitle = "Monster TP Farm",
+	SubTitle = "",
 	TabWidth = 160,
 	Size = UDim2.fromOffset(580, 460),
 	Theme = "Darker"
