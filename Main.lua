@@ -4,27 +4,47 @@ local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 
 local LocalPlayer = Players.LocalPlayer
-local Remote = ReplicatedStorage:WaitForChild("BLINK_RELIABLE_REMOTE")
 
 local MacroData = {}
 local IsRecording = false
 local SelectedMacro = ""
-local SaveFileName = "MyMacro"
+local NewFileName = "MyMacro"
+local FolderName = "SenzyMacros"
+local LastRecordTime = 0
 
--- --------------------------------------------------
--- 1. Helper Functions (Money, Buffer & Files)
--- --------------------------------------------------
--- ฟังก์ชันดึงค่าเงินผู้เล่น (ถ้าแมพมึงใช้ชื่ออื่น ให้เปลี่ยน "Money" ตรงนี้)
-local function getPlayerMoney()
-    local leaderstats = LocalPlayer:FindFirstChild("leaderstats")
-    if leaderstats then
-        local money = leaderstats:FindFirstChild("Money") or leaderstats:FindFirstChild("Coins") or leaderstats:FindFirstChild("Cash")
-        if money then return money.Value end
-    end
-    -- ป้องกันกรณีเงินอยู่ใน PlayerGui หรือตำแหน่งอื่น
-    return 0
+if makefolder and not isfolder(FolderName) then
+    makefolder(FolderName)
 end
 
+-- --------------------------------------------------
+-- UI Fixer: เปลี่ยนชื่อ UI ที่เป็น GUID สุ่มให้เป็นชื่อคงที่
+-- --------------------------------------------------
+local FIXED_FRAME_NAME = "FixedUpgradeFrame"
+
+local function fixDynamicUINames()
+    local playerGui = LocalPlayer:FindFirstChildOfClass("PlayerGui")
+    if not playerGui then return end
+
+    for _, descendant in ipairs(playerGui:GetDescendants()) do
+        if descendant.Name == "upgradeButton" or descendant.Name == "UpgradeButton" then
+            local parentFrame = descendant.Parent
+            if parentFrame and parentFrame:IsA("GuiObject") and parentFrame.Name ~= FIXED_FRAME_NAME then
+                parentFrame.Name = FIXED_FRAME_NAME
+                print("[Senzy Hub] แก้ไขชื่อ UI เป็น:", FIXED_FRAME_NAME)
+            end
+        end
+    end
+end
+
+task.spawn(function()
+    while task.wait(1) do
+        pcall(fixDynamicUINames)
+    end
+end)
+
+-- --------------------------------------------------
+-- Helper Functions & Serialization
+-- --------------------------------------------------
 local function bufferToTable(buf)
     local t = {}
     for i = 0, buffer.len(buf) - 1 do
@@ -41,13 +61,57 @@ local function tableToBuffer(t)
     return buf
 end
 
+local function serializeArg(arg)
+    local t = typeof(arg)
+    if t == "buffer" then
+        return { Type = "buffer", Data = bufferToTable(arg) }
+    elseif t == "Instance" then
+        return { Type = "Instance", Data = arg:GetFullName() }
+    elseif t == "Vector3" then
+        return { Type = "Vector3", Data = { arg.X, arg.Y, arg.Z } }
+    elseif t == "CFrame" then
+        return { Type = "CFrame", Data = { arg:GetComponents() } }
+    elseif t == "EnumItem" then
+        return { Type = "Enum", Data = tostring(arg) }
+    else
+        return { Type = "raw", Data = arg }
+    end
+end
+
+local function deserializeArg(argObj)
+    if not argObj or type(argObj) ~= "table" then return argObj end
+    
+    if argObj.Type == "buffer" then
+        return tableToBuffer(argObj.Data)
+    elseif argObj.Type == "Instance" then
+        local obj = game
+        if type(argObj.Data) == "string" then
+            for pathPart in string.gmatch(argObj.Data, "[^%.]+") do
+                if pathPart ~= "game" then
+                    obj = obj and obj:FindFirstChild(pathPart)
+                end
+            end
+        end
+        return obj
+    elseif argObj.Type == "Vector3" then
+        return Vector3.new(unpack(argObj.Data))
+    elseif argObj.Type == "CFrame" then
+        return CFrame.new(unpack(argObj.Data))
+    else
+        return argObj.Data
+    end
+end
+
 local function getMacroFiles()
     local files = {}
     if listfiles then
-        for _, file in ipairs(listfiles("")) do
+        local targetPath = isfolder and isfolder(FolderName) and FolderName or ""
+        for _, file in ipairs(listfiles(targetPath)) do
             if file:sub(-5) == ".json" then
-                local name = file:gsub("\\", "/"):match("[^/]+$"):sub(1, -6)
-                table.insert(files, name)
+                local cleanName = file:gsub("\\", "/"):match("[^/]+$")
+                if cleanName then
+                    table.insert(files, cleanName:sub(1, -6))
+                end
             end
         end
     end
@@ -56,36 +120,15 @@ local function getMacroFiles()
 end
 
 -- --------------------------------------------------
--- 2. Hooking Remote (บันทึกอิงตามค่าเงิน)
--- --------------------------------------------------
-local oldNamecall
-oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
-    local method = getnamecallmethod()
-    local args = {...}
-    
-    if IsRecording and self == Remote and method == "FireServer" then
-        local buf = args[1]
-        if typeof(buf) == "buffer" then
-            table.insert(MacroData, {
-                Money = getPlayerMoney(), -- บันทึกค่าเงินตอนยิง Remote
-                Data = bufferToTable(buf)
-            })
-            print("[Senzy Hub] บันทึกแอคชั่นแล้ว! เงินที่ใช้:", getPlayerMoney())
-        end
-    end
-    return oldNamecall(self, ...)
-end)
-
--- --------------------------------------------------
--- 3. Fluent UI Setup
+-- UI Setup & Fluent Init
 -- --------------------------------------------------
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
     Title = "SENZY HUB",
-    SubTitle = "Macro System (Money-Based)",
+    SubTitle = "Macro System (Enhanced)",
     TabWidth = 160,
-    Size = UDim2.fromOffset(580, 460),
+    Size = UDim2.fromOffset(580, 520),
     Theme = "Darker"
 })
 
@@ -95,140 +138,201 @@ local Tabs = {
 }
 
 -- --------------------------------------------------
--- 4. Controls & File Manager
+-- Universal Remote Hooking
 -- --------------------------------------------------
-Tabs.Macro:AddButton({
-    Title = "🔴 Start Record",
-    Callback = function()
-        MacroData = {}
-        IsRecording = true
-        Fluent:Notify({ Title = "Senzy Hub", Content = "เริ่มอัดมาโคร (ระบบจับตามค่าเงิน)...", Duration = 3 })
-    end
-})
+local rawMeta = getrawmetatable(game)
+local oldNamecall = rawMeta.__namecall
+setreadonly(rawMeta, false)
 
-Tabs.Macro:AddButton({
-    Title = "⏹️ Stop Record",
-    Callback = function()
-        IsRecording = false
-        Fluent:Notify({ Title = "Senzy Hub", Content = "หยุดอัดเรียบร้อย!", Duration = 3 })
-    end
-})
+rawMeta.__namecall = newcclosure(function(self, ...)
+    local method = getnamecallmethod()
+    local args = {...}
 
-Tabs.Macro:AddInput("SaveNameInput", {
-    Title = "ชื่อไฟล์สำหรับเซฟ",
+    local isFire = (method == "FireServer" or method == "fireServer")
+    local isInvoke = (method == "InvokeServer" or method == "invokeServer")
+
+    if IsRecording and (isFire or isInvoke) then
+        task.spawn(function()
+            local currentTime = os.clock()
+            local timeDelay = (LastRecordTime == 0) and 0 or (currentTime - LastRecordTime)
+            LastRecordTime = currentTime
+
+            local processedArgs = {}
+            for i, arg in ipairs(args) do
+                table.insert(processedArgs, serializeArg(arg))
+            end
+            
+            table.insert(MacroData, {
+                RemotePath = self:GetFullName(),
+                Type = isInvoke and "Invoke" or "Fire",
+                Delay = timeDelay,
+                Args = processedArgs
+            })
+            
+            local actionType = isInvoke and "Invoke" or "Fire"
+            
+            print("[Senzy Hub] บันทึก (" .. actionType .. "):", self.Name)
+            
+            Fluent:Notify({
+                Title = "Recorded Action",
+                Content = actionType .. " -> " .. self.Name,
+                Duration = 1.5
+            })
+        end)
+    end
+
+    return oldNamecall(self, ...)
+end)
+
+setreadonly(rawMeta, true)
+
+-- --------------------------------------------------
+-- UI Buttons & Functions
+-- --------------------------------------------------
+local CreateInput = Tabs.Macro:AddInput("CreateNameInput", {
+    Title = "ชื่อไฟล์มาโครใหม่",
     Default = "MyMacro",
-    Placeholder = "พิมพ์ชื่อไฟล์...",
+    Placeholder = "พิมพ์ชื่อไฟล์ที่นี่...",
     Numeric = false,
     Finished = false,
     Callback = function(Value)
-        SaveFileName = Value ~= "" and Value or "MyMacro"
+        NewFileName = Value ~= "" and Value or "MyMacro"
     end
 })
+
+local MacroDropdown
 
 Tabs.Macro:AddButton({
-    Title = "💾 Save Macro",
+    Title = "➕ สร้างไฟล์มาโคร",
     Callback = function()
-        if #MacroData == 0 then 
-            return Fluent:Notify({ Title = "Senzy Hub", Content = "ไม่มีข้อมูลให้อัด!", Duration = 3 }) 
-        end
+        local name = CreateInput.Value ~= "" and CreateInput.Value or NewFileName
+        local filePath = FolderName .. "/" .. name .. ".json"
         
-        local success, err = pcall(function()
-            writefile(SaveFileName .. ".json", HttpService:JSONEncode(MacroData))
-        end)
+        writefile(filePath, HttpService:JSONEncode({}))
+        MacroDropdown:SetValues(getMacroFiles())
+        MacroDropdown:SetValue(name)
+        SelectedMacro = name
         
-        if success then
-            Fluent:Notify({ Title = "Senzy Hub", Content = "เซฟลงไฟล์ " .. SaveFileName .. ".json แล้ว!", Duration = 3 })
-        else
-            Fluent:Notify({ Title = "Senzy Hub", Content = "เซฟล้มเหลว: " .. tostring(err), Duration = 3 })
-        end
+        Fluent:Notify({ Title = "Senzy Hub", Content = "สร้างไฟล์เรียบร้อย!", Duration = 3 })
     end
 })
 
-local MacroDropdown = Tabs.Macro:AddDropdown("MacroSelect", {
-    Title = "เลือกไฟล์มาโครที่จะใช้",
+MacroDropdown = Tabs.Macro:AddDropdown("MacroSelect", {
+    Title = "เลือกไฟล์มาโคร",
     Values = getMacroFiles(),
     Multi = false,
     Default = 1,
-    Callback = function(Value)
-        SelectedMacro = Value
+    Callback = function(Value) SelectedMacro = Value end
+})
+
+-- 🗑️ ปุ่มลบไฟล์มาโครที่เลือกอยู่
+Tabs.Macro:AddButton({
+    Title = "🗑️ ลบไฟล์มาโครที่เลือก",
+    Callback = function()
+        if SelectedMacro == "" or SelectedMacro == "ไม่มีไฟล์เซฟ" then
+            return Fluent:Notify({ Title = "Senzy Hub", Content = "กรุณาเลือกไฟล์ที่จะลบก่อน!", Duration = 3 })
+        end
+
+        local filePath = FolderName .. "/" .. SelectedMacro .. ".json"
+        if isfile and isfile(filePath) and delfile then
+            delfile(filePath)
+            
+            -- อัปเดตรายชื่อใน Dropdown
+            local fileList = getMacroFiles()
+            MacroDropdown:SetValues(fileList)
+            SelectedMacro = fileList[1] or ""
+            MacroDropdown:SetValue(SelectedMacro)
+
+            Fluent:Notify({ Title = "Senzy Hub", Content = "ลบไฟล์สำเร็จ!", Duration = 3 })
+        else
+            Fluent:Notify({ Title = "Senzy Hub", Content = "ไม่พบไฟล์ หรือ Executer ไม่รองรับการลบ", Duration = 3 })
+        end
     end
 })
 
 Tabs.Macro:AddButton({
-    Title = "🔄 Refresh รายชื่อไฟล์",
+    Title = "🔴 Start Record (เริ่มอัด)",
     Callback = function()
-        MacroDropdown:SetValues(getMacroFiles())
-        Fluent:Notify({ Title = "Senzy Hub", Content = "อัปเดตรายชื่อไฟล์แล้ว!", Duration = 2 })
+        if SelectedMacro == "" or SelectedMacro == "ไม่มีไฟล์เซฟ" then
+            return Fluent:Notify({ Title = "Senzy Hub", Content = "กรุณาเลือกไฟล์ก่อน!", Duration = 3 })
+        end
+        
+        fixDynamicUINames()
+        
+        MacroData = {}
+        LastRecordTime = 0
+        IsRecording = true
+        Fluent:Notify({ Title = "Senzy Hub", Content = "เริ่มอัด...", Duration = 3 })
+    end
+})
+
+Tabs.Macro:AddButton({
+    Title = "⏹️ Stop & Save Record",
+    Callback = function()
+        if not IsRecording then return end
+        IsRecording = false
+        
+        if #MacroData == 0 then
+            return Fluent:Notify({ Title = "Senzy Hub", Content = "ไม่มีข้อมูล!", Duration = 3 })
+        end
+        
+        local filePath = FolderName .. "/" .. SelectedMacro .. ".json"
+        writefile(filePath, HttpService:JSONEncode(MacroData))
+        Fluent:Notify({ Title = "Senzy Hub", Content = "บันทึก " .. #MacroData .. " รายการแล้ว!", Duration = 3 })
     end
 })
 
 Tabs.Macro:AddButton({
     Title = "▶️ Play Macro",
     Callback = function()
-        if SelectedMacro == "" or SelectedMacro == "ไม่มีไฟล์เซฟ" then
-            return Fluent:Notify({ Title = "Senzy Hub", Content = "กรุณาเลือกไฟล์มาโครก่อน!", Duration = 3 })
-        end
+        if SelectedMacro == "" or SelectedMacro == "ไม่มีไฟล์เซฟ" then return end
+        local filePath = FolderName .. "/" .. SelectedMacro .. ".json"
+        if not isfile(filePath) then return end
         
-        local fileName = SelectedMacro .. ".json"
-        if not isfile(fileName) then 
-            return Fluent:Notify({ Title = "Senzy Hub", Content = "ไม่พบไฟล์!", Duration = 3 }) 
-        end
-        
-        -- แก้จุดบั๊ก: ใช้ JSONDecode อ่านไฟล์
-        local success, data = pcall(function()
-            return HttpService:JSONDecode(readfile(fileName))
+        local success, data = pcall(function() 
+            return HttpService:JSONEncode(readfile(filePath)) 
         end)
+        data = HttpService:JSONDecode(readfile(filePath))
+        if not data or #data == 0 then return end
         
-        if not success or not data then
-            return Fluent:Notify({ Title = "Senzy Hub", Content = "อ่านไฟล์เซฟล้มเหลว!", Duration = 3 })
-        end
+        fixDynamicUINames()
         
-        Fluent:Notify({ Title = "Senzy Hub", Content = "กำลังเล่นมาโคร: " .. SelectedMacro, Duration = 3 })
+        Fluent:Notify({ Title = "Senzy Hub", Content = "เริ่มเล่นมาโคร...", Duration = 3 })
         
-        -- ทำงานวนตามค่าเงิน
         task.spawn(function()
             for i, action in ipairs(data) do
-                local targetMoney = action.Money or 0
+                local delayTime = action.Delay or 0.1
+                if delayTime > 0 then task.wait(delayTime) end
                 
-                -- วนรอจนกว่าเงินผู้เล่นจะถึงราคาที่บันทึกไว้
-                repeat 
-                    task.wait(0.2) 
-                until getPlayerMoney() >= targetMoney
+                local remoteObj = game
+                if action.RemotePath then
+                    for pathPart in string.gmatch(action.RemotePath, "[^%.]+") do
+                        if pathPart ~= "game" then
+                            remoteObj = remoteObj and remoteObj:FindFirstChild(pathPart)
+                        end
+                    end
+                end
                 
-                -- เงินพอแล้ว ยิง Remote วาง/อัปเกรด
-                local restoredBuffer = tableToBuffer(action.Data)
-                Remote:FireServer(restoredBuffer, {})
-                
-                task.wait(0.3) -- ดีเลย์กันสแปมส่ง Remote รัวเกินไป
+                if remoteObj then
+                    local fireArgs = {}
+                    for _, argObj in ipairs(action.Args or {}) do
+                        table.insert(fireArgs, deserializeArg(argObj))
+                    end
+                    
+                    pcall(function()
+                        if action.Type == "Invoke" and remoteObj:IsA("RemoteFunction") then
+                            remoteObj:InvokeServer(unpack(fireArgs))
+                        elseif remoteObj:IsA("RemoteEvent") then
+                            remoteObj:FireServer(unpack(fireArgs))
+                        end
+                    end)
+                else
+                    warn("[Senzy Hub] หา Remote ไม่พบจาก Path:", action.RemotePath)
+                end
             end
-            Fluent:Notify({ Title = "Senzy Hub", Content = "เล่นมาโครจบแล้ว!", Duration = 3 })
+            Fluent:Notify({ Title = "Senzy Hub", Content = "เล่นเสร็จสิ้น!", Duration = 3 })
         end)
     end
 })
-
--- --------------------------------------------------
--- 5. Toggle Keybind & UI Control
--- --------------------------------------------------
-local ToggleKeybind = Tabs.Settings:AddKeybind("GUI_Toggle", {
-    Title = "UI Toggle Key",
-    Default = "P"
-})
-
-local isGuiVisible = true
-
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    
-    local targetKey = Enum.KeyCode[ToggleKeybind.Value] or Enum.KeyCode.P
-    if input.KeyCode == targetKey then
-        isGuiVisible = not isGuiVisible
-        
-        for _, gui in ipairs(game:GetService("CoreGui"):GetChildren()) do
-            if gui:IsA("ScreenGui") and (gui.Name:find("Fluent") or gui:FindFirstChild("Main")) then
-                gui.Enabled = isGuiVisible
-            end
-        end
-    end
-end)
 
 Window:SelectTab(1)
