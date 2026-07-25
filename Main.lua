@@ -9,6 +9,7 @@ local MacroData = {}
 local IsRecording = false
 local IsPlaying = false
 local AutoFixUI = false
+local AutoNextEnabled = false
 local SelectedMacro = ""
 local NewFileName = "MyMacro"
 local FolderName = "SenzyMacros"
@@ -19,7 +20,23 @@ if makefolder and not isfolder(FolderName) then
 end
 
 -- --------------------------------------------------
--- UI Fixer Loop (ควบคุมด้วย Toggle)
+-- Remote Path Setup (Auto Next)
+-- --------------------------------------------------
+local ReliableRemote = nil
+task.spawn(function()
+    pcall(function()
+        ReliableRemote = ReplicatedStorage:WaitForChild("Packages")
+            :WaitForChild("_Index")
+            :WaitForChild("imezx_warp@1.0.14")
+            :WaitForChild("warp")
+            :WaitForChild("Index")
+            :WaitForChild("Event")
+            :WaitForChild("Reliable")
+    end)
+end)
+
+-- --------------------------------------------------
+-- UI Fixer Loop
 -- --------------------------------------------------
 local FIXED_FRAME_NAME = "FixedUpgradeFrame"
 
@@ -130,7 +147,7 @@ local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/
 
 local Window = Fluent:CreateWindow({
     Title = "SENZY HUB",
-    SubTitle = "Macro System (Toggle Enhanced)",
+    SubTitle = "Macro System & Auto Next",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 520),
     Theme = "Darker"
@@ -247,6 +264,41 @@ setreadonly(rawMeta, true)
 -- --------------------------------------------------
 -- UI Controls (Toggles & Settings)
 -- --------------------------------------------------
+
+-- ⏭️ TOGGLE: Auto Next (ไปด่านถัดไปอัตโนมัติ)
+Tabs.Macro:AddToggle("AutoNextToggle", {
+    Title = "⏭️ Auto Next (ไปด่านถัดไปอัตโนมัติ)",
+    Default = false,
+    Callback = function(Value)
+        AutoNextEnabled = Value
+        if AutoNextEnabled then
+            Fluent:Notify({ Title = "Senzy Hub", Content = "เปิดใช้งาน Auto Next", Duration = 3 })
+            
+            task.spawn(function()
+                while AutoNextEnabled do
+                    if ReliableRemote then
+                        pcall(function()
+                            ReliableRemote:FireServer()
+                        end)
+                    else
+                        -- พยายามค้นหา Remote ใหม่หากยังหาไม่พบ
+                        ReliableRemote = ReplicatedStorage:FindFirstChild("Packages") 
+                            and ReplicatedStorage.Packages:FindFirstChild("_Index") 
+                            and ReplicatedStorage.Packages._Index:FindFirstChild("imezx_warp@1.0.14")
+                            and ReplicatedStorage.Packages._Index["imezx_warp@1.0.14"]:FindFirstChild("warp")
+                            and ReplicatedStorage.Packages._Index["imezx_warp@1.0.14"].warp:FindFirstChild("Index")
+                            and ReplicatedStorage.Packages._Index["imezx_warp@1.0.14"].warp.Index:FindFirstChild("Event")
+                            and ReplicatedStorage.Packages._Index["imezx_warp@1.0.14"].warp.Index.Event:FindFirstChild("Reliable")
+                    end
+                    task.wait(1) -- ระยะเวลาหน่วงในการส่งสัญญาณไปด่านถัดไป (ปรับเปลี่ยนได้)
+                end
+            end)
+        else
+            Fluent:Notify({ Title = "Senzy Hub", Content = "ปิดใช้งาน Auto Next", Duration = 3 })
+        end
+    end
+})
+
 local CreateInput = Tabs.Macro:AddInput("CreateNameInput", {
     Title = "ชื่อไฟล์มาโครใหม่",
     Default = "MyMacro",
