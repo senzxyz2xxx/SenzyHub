@@ -7,6 +7,8 @@ local LocalPlayer = Players.LocalPlayer
 
 local MacroData = {}
 local IsRecording = false
+local IsPlaying = false
+local AutoFixUI = false
 local SelectedMacro = ""
 local NewFileName = "MyMacro"
 local FolderName = "SenzyMacros"
@@ -17,7 +19,7 @@ if makefolder and not isfolder(FolderName) then
 end
 
 -- --------------------------------------------------
--- UI Fixer: เปลี่ยนชื่อ UI ที่เป็น GUID สุ่มให้เป็นชื่อคงที่
+-- UI Fixer Loop (ควบคุมด้วย Toggle)
 -- --------------------------------------------------
 local FIXED_FRAME_NAME = "FixedUpgradeFrame"
 
@@ -38,7 +40,9 @@ end
 
 task.spawn(function()
     while task.wait(1) do
-        pcall(fixDynamicUINames)
+        if AutoFixUI then
+            pcall(fixDynamicUINames)
+        end
     end
 end)
 
@@ -126,7 +130,7 @@ local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/
 
 local Window = Fluent:CreateWindow({
     Title = "SENZY HUB",
-    SubTitle = "Macro System (Enhanced)",
+    SubTitle = "Macro System (Toggle Enhanced)",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 520),
     Theme = "Darker"
@@ -143,7 +147,6 @@ local Tabs = {
 local LOGO_IMAGE_NAME = "SenzH.png"
 local LOGO_URL = "https://raw.githubusercontent.com/senzxyz2xxx/SenzyHub/refs/heads/main/SenzH.png"
 
--- ดาวน์โหลดรูปโลโก้ลงเครื่องผ่าน Executor
 if writefile and getgenv then
     if not isfile(LOGO_IMAGE_NAME) then
         pcall(function()
@@ -173,11 +176,10 @@ toggleBtn.Active = true
 toggleBtn.Draggable = true
 toggleBtn.Parent = toggleGui
 
--- โหลดรูปภาพด้วย getcustomasset (ถ้ารองรับ)
 if getcustomasset and isfile(LOGO_IMAGE_NAME) then
     toggleBtn.Image = getcustomasset(LOGO_IMAGE_NAME)
 else
-    toggleBtn.Image = LOGO_URL -- Fallback สำหรับ Executor ที่ดึง URL ตรงได้
+    toggleBtn.Image = LOGO_URL
 end
 
 local uiCorner = Instance.new("UICorner", toggleBtn)
@@ -187,7 +189,6 @@ local uiStroke = Instance.new("UIStroke", toggleBtn)
 uiStroke.Color = Color3.fromRGB(120, 60, 255)
 uiStroke.Thickness = 2
 
--- สลับการเปิด/ปิด UI
 toggleBtn.MouseButton1Click:Connect(function()
     if Window then
         Window:Minimize()
@@ -244,7 +245,7 @@ end)
 setreadonly(rawMeta, true)
 
 -- --------------------------------------------------
--- UI Buttons & Functions
+-- UI Controls (Toggles & Settings)
 -- --------------------------------------------------
 local CreateInput = Tabs.Macro:AddInput("CreateNameInput", {
     Title = "ชื่อไฟล์มาโครใหม่",
@@ -282,7 +283,6 @@ MacroDropdown = Tabs.Macro:AddDropdown("MacroSelect", {
     Callback = function(Value) SelectedMacro = Value end
 })
 
--- 🗑️ ปุ่มลบไฟล์มาโครที่เลือกอยู่
 Tabs.Macro:AddButton({
     Title = "🗑️ ลบไฟล์มาโครที่เลือก",
     Callback = function()
@@ -294,7 +294,6 @@ Tabs.Macro:AddButton({
         if isfile and isfile(filePath) and delfile then
             delfile(filePath)
             
-            -- อัปเดตรายชื่อใน Dropdown
             local fileList = getMacroFiles()
             MacroDropdown:SetValues(fileList)
             SelectedMacro = fileList[1] or ""
@@ -307,88 +306,110 @@ Tabs.Macro:AddButton({
     end
 })
 
-Tabs.Macro:AddButton({
-    Title = "🔴 Start Record (เริ่มอัด)",
-    Callback = function()
-        if SelectedMacro == "" or SelectedMacro == "ไม่มีไฟล์เซฟ" then
-            return Fluent:Notify({ Title = "Senzy Hub", Content = "กรุณาเลือกไฟล์ก่อน!", Duration = 3 })
-        end
-        
-        fixDynamicUINames()
-        
-        MacroData = {}
-        LastRecordTime = 0
-        IsRecording = true
-        Fluent:Notify({ Title = "Senzy Hub", Content = "เริ่มอัด...", Duration = 3 })
-    end
-})
-
-Tabs.Macro:AddButton({
-    Title = "⏹️ Stop & Save Record",
-    Callback = function()
-        if not IsRecording then return end
-        IsRecording = false
-        
-        if #MacroData == 0 then
-            return Fluent:Notify({ Title = "Senzy Hub", Content = "ไม่มีข้อมูล!", Duration = 3 })
-        end
-        
-        local filePath = FolderName .. "/" .. SelectedMacro .. ".json"
-        writefile(filePath, HttpService:JSONEncode(MacroData))
-        Fluent:Notify({ Title = "Senzy Hub", Content = "บันทึก " .. #MacroData .. " รายการแล้ว!", Duration = 3 })
-    end
-})
-
-Tabs.Macro:AddButton({
-    Title = "▶️ Play Macro",
-    Callback = function()
-        if SelectedMacro == "" or SelectedMacro == "ไม่มีไฟล์เซฟ" then return end
-        local filePath = FolderName .. "/" .. SelectedMacro .. ".json"
-        if not isfile(filePath) then return end
-        
-        local success, data = pcall(function() 
-            return HttpService:JSONDecode(readfile(filePath)) 
-        end)
-        data = HttpService:JSONDecode(readfile(filePath))
-        if not data or #data == 0 then return end
-        
-        fixDynamicUINames()
-        
-        Fluent:Notify({ Title = "Senzy Hub", Content = "เริ่มเล่นมาโคร...", Duration = 3 })
-        
-        task.spawn(function()
-            for i, action in ipairs(data) do
-                local delayTime = action.Delay or 0.1
-                if delayTime > 0 then task.wait(delayTime) end
-                
-                local remoteObj = game
-                if action.RemotePath then
-                    for pathPart in string.gmatch(action.RemotePath, "[^%.]+") do
-                        if pathPart ~= "game" then
-                            remoteObj = remoteObj and remoteObj:FindFirstChild(pathPart)
-                        end
-                    end
-                end
-                
-                if remoteObj then
-                    local fireArgs = {}
-                    for _, argObj in ipairs(action.Args or {}) do
-                        table.insert(fireArgs, deserializeArg(argObj))
-                    end
-                    
-                    pcall(function()
-                        if action.Type == "Invoke" and remoteObj:IsA("RemoteFunction") then
-                            remoteObj:InvokeServer(unpack(fireArgs))
-                        elseif remoteObj:IsA("RemoteEvent") then
-                            remoteObj:FireServer(unpack(fireArgs))
-                        end
-                    end)
-                else
-                    warn("[Senzy Hub] หา Remote ไม่พบจาก Path:", action.RemotePath)
-                end
+-- 🔴 TOGGLE: เริ่ม / หยุดบันทึกมาโคร
+Tabs.Macro:AddToggle("RecordToggle", {
+    Title = "🔴 Record Macro (เริ่ม / หยุดและบันทึก)",
+    Default = false,
+    Callback = function(Value)
+        IsRecording = Value
+        if IsRecording then
+            if SelectedMacro == "" or SelectedMacro == "ไม่มีไฟล์เซฟ" then
+                Fluent:Notify({ Title = "Senzy Hub", Content = "กรุณาเลือกไฟล์ก่อน!", Duration = 3 })
+                return
             end
-            Fluent:Notify({ Title = "Senzy Hub", Content = "เล่นเสร็จสิ้น!", Duration = 3 })
-        end)
+            
+            fixDynamicUINames()
+            MacroData = {}
+            LastRecordTime = 0
+            Fluent:Notify({ Title = "Senzy Hub", Content = "เริ่มอัดมาโคร...", Duration = 3 })
+        else
+            if #MacroData == 0 then
+                Fluent:Notify({ Title = "Senzy Hub", Content = "ไม่มีข้อมูลที่จะบันทึก!", Duration = 3 })
+            else
+                local filePath = FolderName .. "/" .. SelectedMacro .. ".json"
+                writefile(filePath, HttpService:JSONEncode(MacroData))
+                Fluent:Notify({ Title = "Senzy Hub", Content = "บันทึก " .. #MacroData .. " รายการเรียบร้อย!", Duration = 3 })
+            end
+        end
+    end
+})
+
+-- ▶️ TOGGLE: เล่นมาโครแบบเปิดค้าง (Loop Playback)
+Tabs.Macro:AddToggle("PlayToggle", {
+    Title = "▶️ Auto Play Macro (เปิด / ปิด การเล่นวนซ้ำ)",
+    Default = false,
+    Callback = function(Value)
+        IsPlaying = Value
+        if IsPlaying then
+            if SelectedMacro == "" or SelectedMacro == "ไม่มีไฟล์เซฟ" then
+                Fluent:Notify({ Title = "Senzy Hub", Content = "กรุณาเลือกไฟล์ก่อน!", Duration = 3 })
+                return
+            end
+            
+            local filePath = FolderName .. "/" .. SelectedMacro .. ".json"
+            if not isfile(filePath) then
+                Fluent:Notify({ Title = "Senzy Hub", Content = "ไม่พบไฟล์มาโคร!", Duration = 3 })
+                return
+            end
+            
+            Fluent:Notify({ Title = "Senzy Hub", Content = "เริ่มเล่นมาโครแบบวนซ้ำ...", Duration = 3 })
+            
+            task.spawn(function()
+                while IsPlaying do
+                    local success, rawData = pcall(function() return readfile(filePath) end)
+                    if not success or not rawData then break end
+                    
+                    local data = HttpService:JSONDecode(rawData)
+                    if not data or #data == 0 then break end
+                    
+                    fixDynamicUINames()
+                    
+                    for i, action in ipairs(data) do
+                        if not IsPlaying then break end
+                        
+                        local delayTime = action.Delay or 0.1
+                        if delayTime > 0 then task.wait(delayTime) end
+                        
+                        local remoteObj = game
+                        if action.RemotePath then
+                            for pathPart in string.gmatch(action.RemotePath, "[^%.]+") do
+                                if pathPart ~= "game" then
+                                    remoteObj = remoteObj and remoteObj:FindFirstChild(pathPart)
+                                end
+                            end
+                        end
+                        
+                        if remoteObj then
+                            local fireArgs = {}
+                            for _, argObj in ipairs(action.Args or {}) do
+                                table.insert(fireArgs, deserializeArg(argObj))
+                            end
+                            
+                            pcall(function()
+                                if action.Type == "Invoke" and remoteObj:IsA("RemoteFunction") then
+                                    remoteObj:InvokeServer(unpack(fireArgs))
+                                elseif remoteObj:IsA("RemoteEvent") then
+                                    remoteObj:FireServer(unpack(fireArgs))
+                                end
+                            end)
+                        else
+                            warn("[Senzy Hub] หา Remote ไม่พบจาก Path:", action.RemotePath)
+                        end
+                    end
+                    task.wait(0.1)
+                end
+                Fluent:Notify({ Title = "Senzy Hub", Content = "หยุดเล่นมาโครแล้ว!", Duration = 3 })
+            end)
+        end
+    end
+})
+
+-- ⚙️ TOGGLE: สแกนซ่อมชื่อ UI อัตโนมัติ
+Tabs.Settings:AddToggle("FixUIToggle", {
+    Title = "⚙️ Auto Fix Dynamic UI Names",
+    Default = true,
+    Callback = function(Value)
+        AutoFixUI = Value
     end
 })
 
