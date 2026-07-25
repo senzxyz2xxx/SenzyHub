@@ -14,6 +14,8 @@ local SelectedMacro = ""
 local NewFileName = "MyMacro"
 local FolderName = "SenzyMacros"
 local LastRecordTime = 0
+local AutoNextDelay = 8 -- ระยะเวลาหน่วง Auto Next (วินาที)
+local PlayLoopDelay = 3 -- เวลาพักหลังจากเล่นมาโครจบ 1 รอบ (วินาที)
 
 if makefolder and not isfolder(FolderName) then
     makefolder(FolderName)
@@ -23,19 +25,20 @@ end
 -- Remote Path Setup
 -- --------------------------------------------------
 local ReliableRemote = nil
-local BlinkRemote = ReplicatedStorage:FindFirstChild("BLINK_RELIABLE_REMOTE")
 
-task.spawn(function()
+local function getReliableRemote()
+    if ReliableRemote and ReliableRemote.Parent then return ReliableRemote end
     pcall(function()
-        ReliableRemote = ReplicatedStorage:WaitForChild("Packages")
-            :WaitForChild("_Index")
-            :WaitForChild("imezx_warp@1.0.14")
-            :WaitForChild("warp")
-            :WaitForChild("Index")
-            :WaitForChild("Event")
-            :WaitForChild("Reliable")
+        ReliableRemote = ReplicatedStorage:FindFirstChild("Packages") 
+            and ReplicatedStorage.Packages:FindFirstChild("_Index") 
+            and ReplicatedStorage.Packages._Index:FindFirstChild("imezx_warp@1.0.14")
+            and ReplicatedStorage.Packages._Index["imezx_warp@1.0.14"]:FindFirstChild("warp")
+            and ReplicatedStorage.Packages._Index["imezx_warp@1.0.14"].warp:FindFirstChild("Index")
+            and ReplicatedStorage.Packages._Index["imezx_warp@1.0.14"].warp.Index:FindFirstChild("Event")
+            and ReplicatedStorage.Packages._Index["imezx_warp@1.0.14"].warp.Index.Event:FindFirstChild("Reliable")
     end)
-end)
+    return ReliableRemote
+end
 
 -- --------------------------------------------------
 -- UI Fixer Loop
@@ -63,26 +66,6 @@ task.spawn(function()
         end
     end
 end)
-
--- --------------------------------------------------
--- Dynamic GUID Transformer (แก้ปัญหาการอัพเกรด Blink)
--- --------------------------------------------------
-local function processBlinkBuffer(buf)
-    if typeof(buf) ~= "buffer" then return buf end
-    
-    local str = buffer.tostring(buf)
-    -- ค้นหารูปแบบ UUID/GUID (8-4-4-4-12 hex chars)
-    local guidPattern = "%x%x%x%x%x%x%x%x%-%x%x%x%x%-%x%x%x%x%-%x%x%x%x%-%x%x%x%x%x%x%x%x%x%x%x%x"
-    local foundGuid = str:match(guidPattern)
-    
-    if foundGuid then
-        -- ถ้าลงมาโครให้ดึง ID ยูนิตที่มีอยู่จริงในสนาม ณ ตอนนั้น
-        -- หากต้องการอัพเกรด สามารถแทนที่ ID GUID ได้ที่นี่
-        print("[Senzy Hub Detected Blink Upgrade GUID]:", foundGuid)
-    end
-    
-    return buf
-end
 
 -- --------------------------------------------------
 -- Helper Functions & Serialization
@@ -168,9 +151,9 @@ local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/
 
 local Window = Fluent:CreateWindow({
     Title = "SENZY HUB",
-    SubTitle = "Macro System & Blink Upgrade Fix",
+    SubTitle = "Macro System (Anti-Reset Fixed)",
     TabWidth = 160,
-    Size = UDim2.fromOffset(580, 520),
+    Size = UDim2.fromOffset(580, 540),
     Theme = "Darker"
 })
 
@@ -283,6 +266,8 @@ setreadonly(rawMeta, true)
 -- --------------------------------------------------
 -- UI Controls
 -- --------------------------------------------------
+
+-- ⏭️ TOGGLE: Auto Next
 Tabs.Macro:AddToggle("AutoNextToggle", {
     Title = "⏭️ Auto Next (ไปด่านถัดไปอัตโนมัติ)",
     Default = false,
@@ -293,25 +278,29 @@ Tabs.Macro:AddToggle("AutoNextToggle", {
             
             task.spawn(function()
                 while AutoNextEnabled do
-                    if ReliableRemote then
+                    local remote = getReliableRemote()
+                    if remote then
                         pcall(function()
-                            ReliableRemote:FireServer(buffer.fromstring("\004"), buffer.fromstring("\254\000\000"))
+                            remote:FireServer(buffer.fromstring("\004"), buffer.fromstring("\254\000\000"))
                         end)
-                    else
-                        ReliableRemote = ReplicatedStorage:FindFirstChild("Packages") 
-                            and ReplicatedStorage.Packages:FindFirstChild("_Index") 
-                            and ReplicatedStorage.Packages._Index:FindFirstChild("imezx_warp@1.0.14")
-                            and ReplicatedStorage.Packages._Index["imezx_warp@1.0.14"]:FindFirstChild("warp")
-                            and ReplicatedStorage.Packages._Index["imezx_warp@1.0.14"].warp:FindFirstChild("Index")
-                            and ReplicatedStorage.Packages._Index["imezx_warp@1.0.14"].warp.Index:FindFirstChild("Event")
-                            and ReplicatedStorage.Packages._Index["imezx_warp@1.0.14"].warp.Index.Event:FindFirstChild("Reliable")
                     end
-                    task.wait(1)
+                    task.wait(AutoNextDelay) -- ใช้ระยะเวลาหน่วงที่กำหนด ไม่ยิงถี่เกินไป
                 end
             end)
         else
             Fluent:Notify({ Title = "Senzy Hub", Content = "ปิดใช้งาน Auto Next", Duration = 3 })
         end
+    end
+})
+
+Tabs.Macro:AddSlider("NextDelaySlider", {
+    Title = "⏱️ หน่วงเวลา Auto Next (วินาที)",
+    Default = 8,
+    Min = 3,
+    Max = 30,
+    Rounding = 0,
+    Callback = function(Value)
+        AutoNextDelay = Value
     end
 })
 
@@ -402,7 +391,7 @@ Tabs.Macro:AddToggle("RecordToggle", {
 })
 
 Tabs.Macro:AddToggle("PlayToggle", {
-    Title = "▶️ Auto Play Macro (เปิด / ปิด การเล่นวนซ้ำ)",
+    Title = "▶️ Auto Play Macro (เล่นมาโครวนซ้ำ)",
     Default = false,
     Callback = function(Value)
         IsPlaying = Value
@@ -418,7 +407,7 @@ Tabs.Macro:AddToggle("PlayToggle", {
                 return
             end
             
-            Fluent:Notify({ Title = "Senzy Hub", Content = "เริ่มเล่นมาโครแบบวนซ้ำ...", Duration = 3 })
+            Fluent:Notify({ Title = "Senzy Hub", Content = "เริ่มเล่นมาโคร...", Duration = 3 })
             
             task.spawn(function()
                 while IsPlaying do
@@ -448,8 +437,7 @@ Tabs.Macro:AddToggle("PlayToggle", {
                         if remoteObj then
                             local fireArgs = {}
                             for _, argObj in ipairs(action.Args or {}) do
-                                local deserialized = deserializeArg(argObj)
-                                table.insert(fireArgs, deserialized)
+                                table.insert(fireArgs, deserializeArg(argObj))
                             end
                             
                             pcall(function()
@@ -461,11 +449,26 @@ Tabs.Macro:AddToggle("PlayToggle", {
                             end)
                         end
                     end
-                    task.wait(0.1)
+                    
+                    -- หน่วงเวลาก่อนเริ่มวนรอบใหม่
+                    if IsPlaying then
+                        task.wait(PlayLoopDelay)
+                    end
                 end
                 Fluent:Notify({ Title = "Senzy Hub", Content = "หยุดเล่นมาโครแล้ว!", Duration = 3 })
             end)
         end
+    end
+})
+
+Tabs.Macro:AddSlider("PlayLoopDelaySlider", {
+    Title = "⏱️ พักหลังเล่นจบ 1 รอบ (วินาที)",
+    Default = 3,
+    Min = 1,
+    Max = 15,
+    Rounding = 0,
+    Callback = function(Value)
+        PlayLoopDelay = Value
     end
 })
 
