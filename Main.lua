@@ -138,6 +138,63 @@ local Tabs = {
 }
 
 -- --------------------------------------------------
+-- Floating Logo Toggle Button System
+-- --------------------------------------------------
+local LOGO_IMAGE_NAME = "SenzH.png"
+local LOGO_URL = "https://raw.githubusercontent.com/senzxyz2xxx/SenzyHub/refs/heads/main/SenzH.png"
+
+-- ดาวน์โหลดรูปโลโก้ลงเครื่องผ่าน Executor
+if writefile and getgenv then
+    if not isfile(LOGO_IMAGE_NAME) then
+        pcall(function()
+            writefile(LOGO_IMAGE_NAME, game:HttpGet(LOGO_URL))
+        end)
+    end
+end
+
+local playerGui = LocalPlayer:FindFirstChildOfClass("PlayerGui") or game:GetService("CoreGui")
+if playerGui:FindFirstChild("SenzyToggleButtonGui") then
+    playerGui.SenzyToggleButtonGui:Destroy()
+end
+
+local toggleGui = Instance.new("ScreenGui")
+toggleGui.Name = "SenzyToggleButtonGui"
+toggleGui.ResetOnSpawn = false
+toggleGui.DisplayOrder = 99999
+toggleGui.Parent = playerGui
+
+local toggleBtn = Instance.new("ImageButton")
+toggleBtn.Name = "LogoButton"
+toggleBtn.Size = UDim2.new(0, 50, 0, 50)
+toggleBtn.Position = UDim2.new(0, 15, 0.5, -25)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+toggleBtn.BorderSizePixel = 0
+toggleBtn.Active = true
+toggleBtn.Draggable = true
+toggleBtn.Parent = toggleGui
+
+-- โหลดรูปภาพด้วย getcustomasset (ถ้ารองรับ)
+if getcustomasset and isfile(LOGO_IMAGE_NAME) then
+    toggleBtn.Image = getcustomasset(LOGO_IMAGE_NAME)
+else
+    toggleBtn.Image = LOGO_URL -- Fallback สำหรับ Executor ที่ดึง URL ตรงได้
+end
+
+local uiCorner = Instance.new("UICorner", toggleBtn)
+uiCorner.CornerRadius = UDim.new(0, 12)
+
+local uiStroke = Instance.new("UIStroke", toggleBtn)
+uiStroke.Color = Color3.fromRGB(120, 60, 255)
+uiStroke.Thickness = 2
+
+-- สลับการเปิด/ปิด UI
+toggleBtn.MouseButton1Click:Connect(function()
+    if Window then
+        Window:Minimize()
+    end
+end)
+
+-- --------------------------------------------------
 -- Universal Remote Hooking
 -- --------------------------------------------------
 local rawMeta = getrawmetatable(game)
@@ -290,7 +347,7 @@ Tabs.Macro:AddButton({
         if not isfile(filePath) then return end
         
         local success, data = pcall(function() 
-            return HttpService:JSONEncode(readfile(filePath)) 
+            return HttpService:JSONDecode(readfile(filePath)) 
         end)
         data = HttpService:JSONDecode(readfile(filePath))
         if not data or #data == 0 then return end
