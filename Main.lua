@@ -1,6 +1,7 @@
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 local Players = game:GetService("Players")
 
 local LocalPlayer = Players.LocalPlayer
@@ -14,8 +15,8 @@ local SelectedMacro = ""
 local NewFileName = "MyMacro"
 local FolderName = "SenzyMacros"
 local LastRecordTime = 0
-local AutoNextDelay = 8 -- ระยะเวลาหน่วง Auto Next (วินาที)
-local PlayLoopDelay = 3 -- เวลาพักหลังจากเล่นมาโครจบ 1 รอบ (วินาที)
+local AutoNextDelay = 8
+local PlayLoopDelay = 3
 
 if makefolder and not isfolder(FolderName) then
     makefolder(FolderName)
@@ -41,7 +42,23 @@ local function getReliableRemote()
 end
 
 -- --------------------------------------------------
--- UI Fixer Loop
+-- Virtual Click Helper (แก้ปัญหา Blink Upgrade)
+-- --------------------------------------------------
+local function clickGuiObject(guiObj)
+    if guiObj and guiObj:IsA("GuiObject") and guiObj.Visible then
+        local pos = guiObj.AbsolutePosition
+        local size = guiObj.AbsoluteSize
+        local clickX = pos.X + (size.X / 2)
+        local clickY = pos.Y + (size.Y / 2) + 36 -- Offset ชดเชย Roblox Topbar
+        
+        VirtualInputManager:SendMouseButtonEvent(clickX, clickY, 0, true, game, 0)
+        task.wait(0.05)
+        VirtualInputManager:SendMouseButtonEvent(clickX, clickY, 0, false, game, 0)
+    end
+end
+
+-- --------------------------------------------------
+-- Dynamic UI Fixer Loop
 -- --------------------------------------------------
 local FIXED_FRAME_NAME = "FixedUpgradeFrame"
 
@@ -151,7 +168,7 @@ local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/
 
 local Window = Fluent:CreateWindow({
     Title = "SENZY HUB",
-    SubTitle = "Macro System (Anti-Reset Fixed)",
+    SubTitle = "Macro System (Virtual UI Supported)",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 540),
     Theme = "Darker"
@@ -217,7 +234,7 @@ toggleBtn.MouseButton1Click:Connect(function()
 end)
 
 -- --------------------------------------------------
--- Universal Remote Hooking
+-- Universal Hooking
 -- --------------------------------------------------
 local rawMeta = getrawmetatable(game)
 local oldNamecall = rawMeta.__namecall
@@ -267,6 +284,31 @@ setreadonly(rawMeta, true)
 -- UI Controls
 -- --------------------------------------------------
 
+-- ⚡ BUTTON: Force Upgrade Active UI (อัปเกรดแบบจำลองคลิก UI)
+Tabs.Macro:AddButton({
+    Title = "⚡ Force Click Upgrade Button (คลิกอัพเกรดบน UI)",
+    Callback = function()
+        local pGui = LocalPlayer:FindFirstChildOfClass("PlayerGui")
+        if not pGui then return end
+
+        local clicked = false
+        for _, descendant in ipairs(pGui:GetDescendants()) do
+            if descendant:IsA("GuiButton") and (descendant.Name:lower():find("upgrade") or descendant.Parent.Name:lower():find("upgrade")) then
+                if descendant.Visible and descendant.AbsoluteSize.X > 0 then
+                    clickGuiObject(descendant)
+                    clicked = true
+                    Fluent:Notify({ Title = "Senzy Hub", Content = "กดปุ่มอัพเกรดบน UI เรียบร้อย!", Duration = 2 })
+                    break
+                end
+            end
+        end
+
+        if not clicked then
+            Fluent:Notify({ Title = "Senzy Hub", Content = "ไม่พบปุ่ม Upgrade บนหน้าจอ!", Duration = 2 })
+        end
+    end
+})
+
 -- ⏭️ TOGGLE: Auto Next
 Tabs.Macro:AddToggle("AutoNextToggle", {
     Title = "⏭️ Auto Next (ไปด่านถัดไปอัตโนมัติ)",
@@ -284,7 +326,7 @@ Tabs.Macro:AddToggle("AutoNextToggle", {
                             remote:FireServer(buffer.fromstring("\004"), buffer.fromstring("\254\000\000"))
                         end)
                     end
-                    task.wait(AutoNextDelay) -- ใช้ระยะเวลาหน่วงที่กำหนด ไม่ยิงถี่เกินไป
+                    task.wait(AutoNextDelay)
                 end
             end)
         else
@@ -299,9 +341,7 @@ Tabs.Macro:AddSlider("NextDelaySlider", {
     Min = 3,
     Max = 30,
     Rounding = 0,
-    Callback = function(Value)
-        AutoNextDelay = Value
-    end
+    Callback = function(Value) AutoNextDelay = Value end
 })
 
 local CreateInput = Tabs.Macro:AddInput("CreateNameInput", {
@@ -310,9 +350,7 @@ local CreateInput = Tabs.Macro:AddInput("CreateNameInput", {
     Placeholder = "พิมพ์ชื่อไฟล์ที่นี่...",
     Numeric = false,
     Finished = false,
-    Callback = function(Value)
-        NewFileName = Value ~= "" and Value or "MyMacro"
-    end
+    Callback = function(Value) NewFileName = Value ~= "" and Value or "MyMacro" end
 })
 
 local MacroDropdown
@@ -350,15 +388,11 @@ Tabs.Macro:AddButton({
         local filePath = FolderName .. "/" .. SelectedMacro .. ".json"
         if isfile and isfile(filePath) and delfile then
             delfile(filePath)
-            
             local fileList = getMacroFiles()
             MacroDropdown:SetValues(fileList)
             SelectedMacro = fileList[1] or ""
             MacroDropdown:SetValue(SelectedMacro)
-
             Fluent:Notify({ Title = "Senzy Hub", Content = "ลบไฟล์สำเร็จ!", Duration = 3 })
-        else
-            Fluent:Notify({ Title = "Senzy Hub", Content = "ไม่พบไฟล์ หรือ Executer ไม่รองรับการลบ", Duration = 3 })
         end
     end
 })
@@ -414,7 +448,7 @@ Tabs.Macro:AddToggle("PlayToggle", {
                     local success, rawData = pcall(function() return readfile(filePath) end)
                     if not success or not rawData then break end
                     
-                    local data = HttpService:JSONDecode(rawData)
+                    local data = HttpService:JSONEncode(rawData)
                     if not data or #data == 0 then break end
                     
                     fixDynamicUINames()
@@ -450,7 +484,6 @@ Tabs.Macro:AddToggle("PlayToggle", {
                         end
                     end
                     
-                    -- หน่วงเวลาก่อนเริ่มวนรอบใหม่
                     if IsPlaying then
                         task.wait(PlayLoopDelay)
                     end
@@ -467,17 +500,13 @@ Tabs.Macro:AddSlider("PlayLoopDelaySlider", {
     Min = 1,
     Max = 15,
     Rounding = 0,
-    Callback = function(Value)
-        PlayLoopDelay = Value
-    end
+    Callback = function(Value) PlayLoopDelay = Value end
 })
 
 Tabs.Settings:AddToggle("FixUIToggle", {
     Title = "⚙️ Auto Fix Dynamic UI Names",
     Default = true,
-    Callback = function(Value)
-        AutoFixUI = Value
-    end
+    Callback = function(Value) AutoFixUI = Value end
 })
 
 Window:SelectTab(1)
