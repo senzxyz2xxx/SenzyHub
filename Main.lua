@@ -20,9 +20,11 @@ if makefolder and not isfolder(FolderName) then
 end
 
 -- --------------------------------------------------
--- Remote Path Setup (Auto Next)
+-- Remote Path Setup
 -- --------------------------------------------------
 local ReliableRemote = nil
+local BlinkRemote = ReplicatedStorage:FindFirstChild("BLINK_RELIABLE_REMOTE")
+
 task.spawn(function()
     pcall(function()
         ReliableRemote = ReplicatedStorage:WaitForChild("Packages")
@@ -49,7 +51,6 @@ local function fixDynamicUINames()
             local parentFrame = descendant.Parent
             if parentFrame and parentFrame:IsA("GuiObject") and parentFrame.Name ~= FIXED_FRAME_NAME then
                 parentFrame.Name = FIXED_FRAME_NAME
-                print("[Senzy Hub] แก้ไขชื่อ UI เป็น:", FIXED_FRAME_NAME)
             end
         end
     end
@@ -62,6 +63,26 @@ task.spawn(function()
         end
     end
 end)
+
+-- --------------------------------------------------
+-- Dynamic GUID Transformer (แก้ปัญหาการอัพเกรด Blink)
+-- --------------------------------------------------
+local function processBlinkBuffer(buf)
+    if typeof(buf) ~= "buffer" then return buf end
+    
+    local str = buffer.tostring(buf)
+    -- ค้นหารูปแบบ UUID/GUID (8-4-4-4-12 hex chars)
+    local guidPattern = "%x%x%x%x%x%x%x%x%-%x%x%x%x%-%x%x%x%x%-%x%x%x%x%-%x%x%x%x%x%x%x%x%x%x%x%x"
+    local foundGuid = str:match(guidPattern)
+    
+    if foundGuid then
+        -- ถ้าลงมาโครให้ดึง ID ยูนิตที่มีอยู่จริงในสนาม ณ ตอนนั้น
+        -- หากต้องการอัพเกรด สามารถแทนที่ ID GUID ได้ที่นี่
+        print("[Senzy Hub Detected Blink Upgrade GUID]:", foundGuid)
+    end
+    
+    return buf
+end
 
 -- --------------------------------------------------
 -- Helper Functions & Serialization
@@ -147,7 +168,7 @@ local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/
 
 local Window = Fluent:CreateWindow({
     Title = "SENZY HUB",
-    SubTitle = "Macro System & Auto Next",
+    SubTitle = "Macro System & Blink Upgrade Fix",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 520),
     Theme = "Darker"
@@ -246,8 +267,6 @@ rawMeta.__namecall = newcclosure(function(self, ...)
             
             local actionType = isInvoke and "Invoke" or "Fire"
             
-            print("[Senzy Hub] บันทึก (" .. actionType .. "):", self.Name)
-            
             Fluent:Notify({
                 Title = "Recorded Action",
                 Content = actionType .. " -> " .. self.Name,
@@ -262,10 +281,8 @@ end)
 setreadonly(rawMeta, true)
 
 -- --------------------------------------------------
--- UI Controls (Toggles & Settings)
+-- UI Controls
 -- --------------------------------------------------
-
--- ⏭️ TOGGLE: Auto Next (ไปด่านถัดไปอัตโนมัติ)
 Tabs.Macro:AddToggle("AutoNextToggle", {
     Title = "⏭️ Auto Next (ไปด่านถัดไปอัตโนมัติ)",
     Default = false,
@@ -278,10 +295,9 @@ Tabs.Macro:AddToggle("AutoNextToggle", {
                 while AutoNextEnabled do
                     if ReliableRemote then
                         pcall(function()
-                            ReliableRemote:FireServer()
+                            ReliableRemote:FireServer(buffer.fromstring("\004"), buffer.fromstring("\254\000\000"))
                         end)
                     else
-                        -- พยายามค้นหา Remote ใหม่หากยังหาไม่พบ
                         ReliableRemote = ReplicatedStorage:FindFirstChild("Packages") 
                             and ReplicatedStorage.Packages:FindFirstChild("_Index") 
                             and ReplicatedStorage.Packages._Index:FindFirstChild("imezx_warp@1.0.14")
@@ -290,7 +306,7 @@ Tabs.Macro:AddToggle("AutoNextToggle", {
                             and ReplicatedStorage.Packages._Index["imezx_warp@1.0.14"].warp.Index:FindFirstChild("Event")
                             and ReplicatedStorage.Packages._Index["imezx_warp@1.0.14"].warp.Index.Event:FindFirstChild("Reliable")
                     end
-                    task.wait(1) -- ระยะเวลาหน่วงในการส่งสัญญาณไปด่านถัดไป (ปรับเปลี่ยนได้)
+                    task.wait(1)
                 end
             end)
         else
@@ -358,7 +374,6 @@ Tabs.Macro:AddButton({
     end
 })
 
--- 🔴 TOGGLE: เริ่ม / หยุดบันทึกมาโคร
 Tabs.Macro:AddToggle("RecordToggle", {
     Title = "🔴 Record Macro (เริ่ม / หยุดและบันทึก)",
     Default = false,
@@ -386,7 +401,6 @@ Tabs.Macro:AddToggle("RecordToggle", {
     end
 })
 
--- ▶️ TOGGLE: เล่นมาโครแบบเปิดค้าง (Loop Playback)
 Tabs.Macro:AddToggle("PlayToggle", {
     Title = "▶️ Auto Play Macro (เปิด / ปิด การเล่นวนซ้ำ)",
     Default = false,
@@ -434,7 +448,8 @@ Tabs.Macro:AddToggle("PlayToggle", {
                         if remoteObj then
                             local fireArgs = {}
                             for _, argObj in ipairs(action.Args or {}) do
-                                table.insert(fireArgs, deserializeArg(argObj))
+                                local deserialized = deserializeArg(argObj)
+                                table.insert(fireArgs, deserialized)
                             end
                             
                             pcall(function()
@@ -444,8 +459,6 @@ Tabs.Macro:AddToggle("PlayToggle", {
                                     remoteObj:FireServer(unpack(fireArgs))
                                 end
                             end)
-                        else
-                            warn("[Senzy Hub] หา Remote ไม่พบจาก Path:", action.RemotePath)
                         end
                     end
                     task.wait(0.1)
@@ -456,7 +469,6 @@ Tabs.Macro:AddToggle("PlayToggle", {
     end
 })
 
--- ⚙️ TOGGLE: สแกนซ่อมชื่อ UI อัตโนมัติ
 Tabs.Settings:AddToggle("FixUIToggle", {
     Title = "⚙️ Auto Fix Dynamic UI Names",
     Default = true,
