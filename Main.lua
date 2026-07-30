@@ -9,7 +9,7 @@ local LocalPlayer = Players.LocalPlayer
 local MacroData = {}
 local IsRecording = false
 local IsPlaying = false
-local AutoFixUI = false
+local AutoFixUI = true -- ปรับ Default ให้เปิดใช้งานแต่แรกตาม UI Settings
 local AutoNextEnabled = false
 local SelectedMacro = ""
 local NewFileName = "MyMacro"
@@ -130,7 +130,11 @@ local function deserializeArg(argObj)
         if type(argObj.Data) == "string" then
             for pathPart in string.gmatch(argObj.Data, "[^%.]+") do
                 if pathPart ~= "game" then
-                    obj = obj and obj:FindFirstChild(pathPart)
+                    if obj then
+                        obj = obj:FindFirstChild(pathPart) or obj:WaitForChild(pathPart, 0.5)
+                    else
+                        break
+                    end
                 end
             end
         end
@@ -214,11 +218,13 @@ toggleBtn.Active = true
 toggleBtn.Draggable = true
 toggleBtn.Parent = toggleGui
 
-if getcustomasset and isfile(LOGO_IMAGE_NAME) then
-    toggleBtn.Image = getcustomasset(LOGO_IMAGE_NAME)
-else
-    toggleBtn.Image = LOGO_URL
-end
+pcall(function()
+    if getcustomasset and isfile and isfile(LOGO_IMAGE_NAME) then
+        toggleBtn.Image = getcustomasset(LOGO_IMAGE_NAME)
+    else
+        toggleBtn.Image = LOGO_URL
+    end
+end)
 
 local uiCorner = Instance.new("UICorner", toggleBtn)
 uiCorner.CornerRadius = UDim.new(0, 12)
@@ -360,8 +366,10 @@ Tabs.Macro:CreateButton({
         local filePath = FolderName .. "/" .. name .. ".json"
         
         writefile(filePath, HttpService:JSONEncode({}))
+        
+        local fileList = getMacroFiles()
         if MacroDropdown and MacroDropdown.Refresh then
-            MacroDropdown:Refresh(getMacroFiles())
+            MacroDropdown:Refresh(fileList)
             MacroDropdown:Set(name)
         end
         SelectedMacro = name
@@ -390,7 +398,7 @@ Tabs.Macro:CreateButton({
             local fileList = getMacroFiles()
             if MacroDropdown and MacroDropdown.Refresh then
                 MacroDropdown:Refresh(fileList)
-                SelectedMacro = fileList[1] or ""
+                SelectedMacro = fileList[1] or "ไม่มีไฟล์เซฟ"
                 MacroDropdown:Set(SelectedMacro)
             end
             Library:Notify({ Title = "Senzy Hub", Content = "ลบไฟล์สำเร็จ!", Time = 3 })
@@ -449,7 +457,6 @@ Tabs.Macro:CreateToggle({
                     local success, rawData = pcall(function() return readfile(filePath) end)
                     if not success or not rawData then break end
                     
-                    -- แก้จุดบั๊กเดิม: เปลี่ยนจาก JSONEncode เป็น JSONDecode
                     local decodeSuccess, data = pcall(function() return HttpService:JSONDecode(rawData) end)
                     if not decodeSuccess or type(data) ~= "table" or #data == 0 then break end
                     
@@ -465,7 +472,9 @@ Tabs.Macro:CreateToggle({
                         if action.RemotePath then
                             for pathPart in string.gmatch(action.RemotePath, "[^%.]+") do
                                 if pathPart ~= "game" then
-                                    remoteObj = remoteObj and remoteObj:FindFirstChild(pathPart)
+                                    if remoteObj then
+                                        remoteObj = remoteObj:FindFirstChild(pathPart)
+                                    end
                                 end
                             end
                         end
