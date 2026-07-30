@@ -13,64 +13,18 @@ local Window = Fluent:CreateWindow({
 })
 
 local Tabs = {
-    Main = Window:AddTab({ Title = "Main Farm", Icon = "sword" }),
-    Misc = Window:AddTab({ Title = "Misc / Safety", Icon = "user-check" }),
+    Main = Window:AddTab({ Title = "Main", Icon = "box" }),
+    Info = Window:AddTab({ Title = "Info", Icon = "info" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
 
 local Options = Fluent.Options
 
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
 local LocalPlayer = Players.LocalPlayer
-
-local isAutoFarm = false
-local isAutoQuest = false
 local isAutoChest = false
-local isNameSpoof = false
-local fakeName = "@Senzy On Top"
-local selectedNpcName = "Thief 1 [Lv. 1]"
-
-local realUsername = LocalPlayer.Name
-local realDisplayName = LocalPlayer.DisplayName
-
-local hiddenTextLabels = {}
-local fakeNameGui = nil
-
-local function getRemotes()
-    local events = ReplicatedStorage:FindFirstChild("Events")
-    local questFunc = ReplicatedStorage:FindFirstChild("QuestFunction") or (events and events:FindFirstChild("QuestFunction"))
-    return questFunc
-end
-
-local function getFarmTarget()
-    if not selectedNpcName or selectedNpcName == "" then return nil end
-    local cleanName = selectedNpcName:split(" [")[1]
-    
-    local searchPaths = {
-        Workspace:FindFirstChild("NPC Zones"),
-        Workspace:FindFirstChild("NPCs"),
-        Workspace:FindFirstChild("Enemies"),
-        Workspace
-    }
-
-    for _, path in ipairs(searchPaths) do
-        if path then
-            for _, v in ipairs(path:GetDescendants()) do
-                if v:IsA("Model") and v.Name:find(cleanName) then
-                    local hum = v:FindFirstChildOfClass("Humanoid")
-                    local root = v:FindFirstChild("HumanoidRootPart") or v:FindFirstChild("Torso") or v.PrimaryPart
-                    if hum and hum.Health > 0 and root then
-                        return v, root
-                    end
-                end
-            end
-        end
-    end
-    return nil
-end
 
 local function getChests()
     local foundChests = {}
@@ -85,106 +39,7 @@ local function getChests()
     return foundChests
 end
 
--- ซ่อนชื่อเดิม + แสดงชื่อปลอม
-local function hideOriginalNameTags()
-    local character = LocalPlayer.Character
-    if not character then return end
-
-    -- ซ่อน TextLabel ที่มีชื่อจริงทั้งหมดในตัวละคร
-    for _, obj in ipairs(character:GetDescendants()) do
-        if obj:IsA("TextLabel") and obj.Name ~= "SenzyFakeLabel" then
-            if obj.Text:find(realUsername) or obj.Text:find(realDisplayName) then
-                if not hiddenTextLabels[obj] then
-                    hiddenTextLabels[obj] = obj.TextTransparency
-                end
-                obj.TextTransparency = 1
-                if obj:FindFirstChildOfClass("UIStroke") then
-                    obj:FindFirstChildOfClass("UIStroke").Enabled = false
-                end
-            end
-        end
-    end
-end
-
-local function restoreOriginalNameTags()
-    -- เอาป้ายชื่อปลอมออก
-    if fakeNameGui then
-        fakeNameGui:Destroy()
-        fakeNameGui = nil
-    end
-
-    -- คืนค่าความโปร่งแสงให้ป้ายชื่อเดิม
-    for label, origTrans in pairs(hiddenTextLabels) do
-        if label and label.Parent then
-            pcall(function()
-                label.TextTransparency = origTrans
-                if label:FindFirstChildOfClass("UIStroke") then
-                    label:FindFirstChildOfClass("UIStroke").Enabled = true
-                end
-            end)
-        end
-    end
-    table.clear(hiddenTextLabels)
-end
-
-local function applyCustomNameTag()
-    local character = LocalPlayer.Character
-    if not character then return end
-    
-    local head = character:FindFirstChild("Head")
-    if not head then return end
-
-    hideOriginalNameTags()
-
-    if not fakeNameGui or fakeNameGui.Parent ~= head then
-        if fakeNameGui then fakeNameGui:Destroy() end
-
-        local bb = Instance.new("BillboardGui")
-        bb.Name = "SenzyFakeNameTag"
-        bb.Adornee = head
-        bb.Size = UDim2.new(0, 300, 0, 70)
-        bb.StudsOffset = Vector3.new(0, 2.5, 0)
-        bb.AlwaysOnTop = true
-
-        local textLabel = Instance.new("TextLabel")
-        textLabel.Name = "SenzyFakeLabel"
-        textLabel.Parent = bb
-        textLabel.Size = UDim2.new(1, 0, 1, 0)
-        textLabel.BackgroundTransparency = 1
-        textLabel.Text = fakeName
-        textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        textLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-        textLabel.TextStrokeTransparency = 0
-        textLabel.Font = Enum.Font.FredokaOne
-        textLabel.TextSize = 36
-
-        bb.Parent = head
-        fakeNameGui = bb
-    end
-end
-
-Tabs.Main:AddSection("Auto Farm")
-
-local NpcDropdown = Tabs.Main:AddDropdown("NpcSelect", {
-    Title = "Select Target NPC",
-    Values = {"Thief 1 [Lv. 1]", "Thief 2 [Lv. 5]", "Thief 3 [Lv. 10]", "Thief 4 [Lv. 15]", "Thief 5 [Lv. 20]"},
-    Default = "Thief 1 [Lv. 1]",
-})
-
-NpcDropdown:OnChanged(function(Value)
-    selectedNpcName = Value
-end)
-
-local FarmToggle = Tabs.Main:AddToggle("AutoFarmToggle", { Title = "Auto Farm NPC", Default = false })
-FarmToggle:OnChanged(function(Value)
-    isAutoFarm = Value
-end)
-
-local QuestToggle = Tabs.Main:AddToggle("AutoQuestToggle", { Title = "Auto Accept Quest", Default = false })
-QuestToggle:OnChanged(function(Value)
-    isAutoQuest = Value
-end)
-
+-- Tab Main: Auto Chests
 Tabs.Main:AddSection("Auto Chest")
 
 local ChestToggle = Tabs.Main:AddToggle("AutoChestToggle", { Title = "Auto Chests (Instant Warp)", Default = false })
@@ -192,97 +47,14 @@ ChestToggle:OnChanged(function(Value)
     isAutoChest = Value
 end)
 
-Tabs.Misc:AddSection("Safety Tools")
+-- Tab Info: Announcement
+Tabs.Info:AddSection("Information")
+Tabs.Info:AddParagraph({
+    Title = "Notice",
+    Content = "Other features are coming soon! Stay tuned for upcoming updates."
+})
 
-local NameSpoofToggle = Tabs.Misc:AddToggle("NameSpoofToggle", { Title = "Name Spoofer (Senzy On Top)", Default = false })
-NameSpoofToggle:OnChanged(function(Value)
-    isNameSpoof = Value
-    if not Value then
-        restoreOriginalNameTags()
-    end
-end)
-
--- Loop: Custom Name Tag & Hide Original
-task.spawn(function()
-    while true do
-        task.wait(0.5)
-        if isNameSpoof then
-            applyCustomNameTag()
-        else
-            restoreOriginalNameTags()
-        end
-    end
-end)
-
--- Loop 1: Auto Farm
-task.spawn(function()
-    while true do
-        task.wait()
-        if isAutoFarm then
-            local targetNpc, targetRoot = getFarmTarget()
-            local character = LocalPlayer.Character
-            
-            if targetNpc and targetRoot and character then
-                local myRoot = character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso")
-                local humanoid = character:FindFirstChildOfClass("Humanoid")
-                
-                if myRoot and humanoid then
-                    myRoot.CFrame = CFrame.new(targetRoot.Position + Vector3.new(0, 6.5, 0))
-                    
-                    if not myRoot:FindFirstChild("FarmBV") then
-                        local bv = Instance.new("BodyVelocity")
-                        bv.Name = "FarmBV"
-                        bv.Velocity = Vector3.new(0, 0, 0)
-                        bv.MaxForce = Vector3.new(0, math.huge, 0)
-                        bv.Parent = myRoot
-                    end
-
-                    local weapon = character:FindFirstChildOfClass("Tool")
-                    if not weapon then
-                        local backpackTool = LocalPlayer.Backpack:FindFirstChildOfClass("Tool")
-                        if backpackTool then
-                            humanoid:EquipTool(backpackTool)
-                            weapon = backpackTool
-                        end
-                    end
-
-                    if weapon then
-                        weapon:Activate()
-                        local swordServer = weapon:FindFirstChild("SwordServer")
-                        if swordServer and swordServer:FindFirstChild("UpdateMousePosition") then
-                            pcall(function()
-                                swordServer.UpdateMousePosition:FireServer(targetRoot.Position)
-                            end)
-                        end
-                    end
-                end
-            end
-        else
-            local character = LocalPlayer.Character
-            if character and character:FindFirstChild("HumanoidRootPart") then
-                local bv = character.HumanoidRootPart:FindFirstChild("FarmBV")
-                if bv then bv:Destroy() end
-            end
-        end
-    end
-end)
-
--- Loop 2: Auto Quest
-task.spawn(function()
-    while true do
-        task.wait(2)
-        if isAutoQuest then
-            local questFunc = getRemotes()
-            if questFunc then
-                pcall(function()
-                    questFunc:InvokeServer("Level 10")
-                end)
-            end
-        end
-    end
-end)
-
--- Loop 3: Auto Chest (Instant Teleport + 0.3s)
+-- Loop: Auto Chest (Instant Teleport + 0.3s)
 task.spawn(function()
     while true do
         task.wait(0.3)
