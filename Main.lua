@@ -42,14 +42,14 @@ local function getReliableRemote()
 end
 
 -- --------------------------------------------------
--- Virtual Click Helper (แก้ปัญหา Blink Upgrade)
+-- Virtual Click Helper
 -- --------------------------------------------------
 local function clickGuiObject(guiObj)
     if guiObj and guiObj:IsA("GuiObject") and guiObj.Visible then
         local pos = guiObj.AbsolutePosition
         local size = guiObj.AbsoluteSize
         local clickX = pos.X + (size.X / 2)
-        local clickY = pos.Y + (size.Y / 2) + 36 -- Offset ชดเชย Roblox Topbar
+        local clickY = pos.Y + (size.Y / 2) + 36
         
         VirtualInputManager:SendMouseButtonEvent(clickX, clickY, 0, true, game, 0)
         task.wait(0.05)
@@ -162,11 +162,11 @@ local function getMacroFiles()
 end
 
 -- --------------------------------------------------
--- UI Setup & Fluent Init
+-- New UI Library Setup (Senz UI)
 -- --------------------------------------------------
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/senzxyz2xxx/Ui/refs/heads/main/main.lua"))()
 
-local Window = Fluent:CreateWindow({
+local Window = Library:CreateWindow({
     Title = "SENZY HUB",
     SubTitle = "Macro System (Virtual UI Supported)",
     TabWidth = 160,
@@ -175,8 +175,8 @@ local Window = Fluent:CreateWindow({
 })
 
 local Tabs = {
-    Macro = Window:AddTab({ Title = "Macro", Icon = "play" }),
-    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
+    Macro = Window:CreateTab({ Title = "Macro", Icon = "play" }),
+    Settings = Window:CreateTab({ Title = "Settings", Icon = "settings" })
 }
 
 -- --------------------------------------------------
@@ -228,8 +228,8 @@ uiStroke.Color = Color3.fromRGB(120, 60, 255)
 uiStroke.Thickness = 2
 
 toggleBtn.MouseButton1Click:Connect(function()
-    if Window then
-        Window:Minimize()
+    if Window and Window.Toggle then
+        Window:Toggle()
     end
 end)
 
@@ -267,10 +267,10 @@ rawMeta.__namecall = newcclosure(function(self, ...)
             
             local actionType = isInvoke and "Invoke" or "Fire"
             
-            Fluent:Notify({
+            Library:Notify({
                 Title = "Recorded Action",
                 Content = actionType .. " -> " .. self.Name,
-                Duration = 1.5
+                Time = 1.5
             })
         end)
     end
@@ -284,8 +284,8 @@ setreadonly(rawMeta, true)
 -- UI Controls
 -- --------------------------------------------------
 
--- ⚡ BUTTON: Force Upgrade Active UI (อัปเกรดแบบจำลองคลิก UI)
-Tabs.Macro:AddButton({
+-- ⚡ BUTTON: Force Upgrade Active UI
+Tabs.Macro:CreateButton({
     Title = "⚡ Force Click Upgrade Button (คลิกอัพเกรดบน UI)",
     Callback = function()
         local pGui = LocalPlayer:FindFirstChildOfClass("PlayerGui")
@@ -297,26 +297,26 @@ Tabs.Macro:AddButton({
                 if descendant.Visible and descendant.AbsoluteSize.X > 0 then
                     clickGuiObject(descendant)
                     clicked = true
-                    Fluent:Notify({ Title = "Senzy Hub", Content = "กดปุ่มอัพเกรดบน UI เรียบร้อย!", Duration = 2 })
+                    Library:Notify({ Title = "Senzy Hub", Content = "กดปุ่มอัพเกรดบน UI เรียบร้อย!", Time = 2 })
                     break
                 end
             end
         end
 
         if not clicked then
-            Fluent:Notify({ Title = "Senzy Hub", Content = "ไม่พบปุ่ม Upgrade บนหน้าจอ!", Duration = 2 })
+            Library:Notify({ Title = "Senzy Hub", Content = "ไม่พบปุ่ม Upgrade บนหน้าจอ!", Time = 2 })
         end
     end
 })
 
 -- ⏭️ TOGGLE: Auto Next
-Tabs.Macro:AddToggle("AutoNextToggle", {
+Tabs.Macro:CreateToggle({
     Title = "⏭️ Auto Next (ไปด่านถัดไปอัตโนมัติ)",
     Default = false,
     Callback = function(Value)
         AutoNextEnabled = Value
         if AutoNextEnabled then
-            Fluent:Notify({ Title = "Senzy Hub", Content = "เปิดใช้งาน Auto Next", Duration = 3 })
+            Library:Notify({ Title = "Senzy Hub", Content = "เปิดใช้งาน Auto Next", Time = 3 })
             
             task.spawn(function()
                 while AutoNextEnabled do
@@ -330,126 +330,128 @@ Tabs.Macro:AddToggle("AutoNextToggle", {
                 end
             end)
         else
-            Fluent:Notify({ Title = "Senzy Hub", Content = "ปิดใช้งาน Auto Next", Duration = 3 })
+            Library:Notify({ Title = "Senzy Hub", Content = "ปิดใช้งาน Auto Next", Time = 3 })
         end
     end
 })
 
-Tabs.Macro:AddSlider("NextDelaySlider", {
+Tabs.Macro:CreateSlider({
     Title = "⏱️ หน่วงเวลา Auto Next (วินาที)",
-    Default = 8,
     Min = 3,
     Max = 30,
+    Default = 8,
     Rounding = 0,
     Callback = function(Value) AutoNextDelay = Value end
 })
 
-local CreateInput = Tabs.Macro:AddInput("CreateNameInput", {
+local CreateInput = Tabs.Macro:CreateInput({
     Title = "ชื่อไฟล์มาโครใหม่",
-    Default = "MyMacro",
     Placeholder = "พิมพ์ชื่อไฟล์ที่นี่...",
-    Numeric = false,
-    Finished = false,
+    Default = "MyMacro",
     Callback = function(Value) NewFileName = Value ~= "" and Value or "MyMacro" end
 })
 
 local MacroDropdown
 
-Tabs.Macro:AddButton({
+Tabs.Macro:CreateButton({
     Title = "➕ สร้างไฟล์มาโคร",
     Callback = function()
-        local name = CreateInput.Value ~= "" and CreateInput.Value or NewFileName
+        local name = (CreateInput and CreateInput.Value and CreateInput.Value ~= "") and CreateInput.Value or NewFileName
         local filePath = FolderName .. "/" .. name .. ".json"
         
         writefile(filePath, HttpService:JSONEncode({}))
-        MacroDropdown:SetValues(getMacroFiles())
-        MacroDropdown:SetValue(name)
+        if MacroDropdown and MacroDropdown.Refresh then
+            MacroDropdown:Refresh(getMacroFiles())
+            MacroDropdown:Set(name)
+        end
         SelectedMacro = name
         
-        Fluent:Notify({ Title = "Senzy Hub", Content = "สร้างไฟล์เรียบร้อย!", Duration = 3 })
+        Library:Notify({ Title = "Senzy Hub", Content = "สร้างไฟล์เรียบร้อย!", Time = 3 })
     end
 })
 
-MacroDropdown = Tabs.Macro:AddDropdown("MacroSelect", {
+MacroDropdown = Tabs.Macro:CreateDropdown({
     Title = "เลือกไฟล์มาโคร",
     Values = getMacroFiles(),
-    Multi = false,
-    Default = 1,
+    Default = "ไม่มีไฟล์เซฟ",
     Callback = function(Value) SelectedMacro = Value end
 })
 
-Tabs.Macro:AddButton({
+Tabs.Macro:CreateButton({
     Title = "🗑️ ลบไฟล์มาโครที่เลือก",
     Callback = function()
         if SelectedMacro == "" or SelectedMacro == "ไม่มีไฟล์เซฟ" then
-            return Fluent:Notify({ Title = "Senzy Hub", Content = "กรุณาเลือกไฟล์ที่จะลบก่อน!", Duration = 3 })
+            return Library:Notify({ Title = "Senzy Hub", Content = "กรุณาเลือกไฟล์ที่จะลบก่อน!", Time = 3 })
         end
 
         local filePath = FolderName .. "/" .. SelectedMacro .. ".json"
         if isfile and isfile(filePath) and delfile then
             delfile(filePath)
             local fileList = getMacroFiles()
-            MacroDropdown:SetValues(fileList)
-            SelectedMacro = fileList[1] or ""
-            MacroDropdown:SetValue(SelectedMacro)
-            Fluent:Notify({ Title = "Senzy Hub", Content = "ลบไฟล์สำเร็จ!", Duration = 3 })
+            if MacroDropdown and MacroDropdown.Refresh then
+                MacroDropdown:Refresh(fileList)
+                SelectedMacro = fileList[1] or ""
+                MacroDropdown:Set(SelectedMacro)
+            end
+            Library:Notify({ Title = "Senzy Hub", Content = "ลบไฟล์สำเร็จ!", Time = 3 })
         end
     end
 })
 
-Tabs.Macro:AddToggle("RecordToggle", {
+Tabs.Macro:CreateToggle({
     Title = "🔴 Record Macro (เริ่ม / หยุดและบันทึก)",
     Default = false,
     Callback = function(Value)
         IsRecording = Value
         if IsRecording then
             if SelectedMacro == "" or SelectedMacro == "ไม่มีไฟล์เซฟ" then
-                Fluent:Notify({ Title = "Senzy Hub", Content = "กรุณาเลือกไฟล์ก่อน!", Duration = 3 })
+                Library:Notify({ Title = "Senzy Hub", Content = "กรุณาเลือกไฟล์ก่อน!", Time = 3 })
                 return
             end
             
             fixDynamicUINames()
             MacroData = {}
             LastRecordTime = 0
-            Fluent:Notify({ Title = "Senzy Hub", Content = "เริ่มอัดมาโคร...", Duration = 3 })
+            Library:Notify({ Title = "Senzy Hub", Content = "เริ่มอัดมาโคร...", Time = 3 })
         else
             if #MacroData == 0 then
-                Fluent:Notify({ Title = "Senzy Hub", Content = "ไม่มีข้อมูลที่จะบันทึก!", Duration = 3 })
+                Library:Notify({ Title = "Senzy Hub", Content = "ไม่มีข้อมูลที่จะบันทึก!", Time = 3 })
             else
                 local filePath = FolderName .. "/" .. SelectedMacro .. ".json"
                 writefile(filePath, HttpService:JSONEncode(MacroData))
-                Fluent:Notify({ Title = "Senzy Hub", Content = "บันทึก " .. #MacroData .. " รายการเรียบร้อย!", Duration = 3 })
+                Library:Notify({ Title = "Senzy Hub", Content = "บันทึก " .. #MacroData .. " รายการเรียบร้อย!", Time = 3 })
             end
         end
     end
 })
 
-Tabs.Macro:AddToggle("PlayToggle", {
+Tabs.Macro:CreateToggle({
     Title = "▶️ Auto Play Macro (เล่นมาโครวนซ้ำ)",
     Default = false,
     Callback = function(Value)
         IsPlaying = Value
         if IsPlaying then
             if SelectedMacro == "" or SelectedMacro == "ไม่มีไฟล์เซฟ" then
-                Fluent:Notify({ Title = "Senzy Hub", Content = "กรุณาเลือกไฟล์ก่อน!", Duration = 3 })
+                Library:Notify({ Title = "Senzy Hub", Content = "กรุณาเลือกไฟล์ก่อน!", Time = 3 })
                 return
             end
             
             local filePath = FolderName .. "/" .. SelectedMacro .. ".json"
             if not isfile(filePath) then
-                Fluent:Notify({ Title = "Senzy Hub", Content = "ไม่พบไฟล์มาโคร!", Duration = 3 })
+                Library:Notify({ Title = "Senzy Hub", Content = "ไม่พบไฟล์มาโคร!", Time = 3 })
                 return
             end
             
-            Fluent:Notify({ Title = "Senzy Hub", Content = "เริ่มเล่นมาโคร...", Duration = 3 })
+            Library:Notify({ Title = "Senzy Hub", Content = "เริ่มเล่นมาโคร...", Time = 3 })
             
             task.spawn(function()
                 while IsPlaying do
                     local success, rawData = pcall(function() return readfile(filePath) end)
                     if not success or not rawData then break end
                     
-                    local data = HttpService:JSONEncode(rawData)
-                    if not data or #data == 0 then break end
+                    -- แก้จุดบั๊กเดิม: เปลี่ยนจาก JSONEncode เป็น JSONDecode
+                    local decodeSuccess, data = pcall(function() return HttpService:JSONDecode(rawData) end)
+                    if not decodeSuccess or type(data) ~= "table" or #data == 0 then break end
                     
                     fixDynamicUINames()
                     
@@ -488,22 +490,22 @@ Tabs.Macro:AddToggle("PlayToggle", {
                         task.wait(PlayLoopDelay)
                     end
                 end
-                Fluent:Notify({ Title = "Senzy Hub", Content = "หยุดเล่นมาโครแล้ว!", Duration = 3 })
+                Library:Notify({ Title = "Senzy Hub", Content = "หยุดเล่นมาโครแล้ว!", Time = 3 })
             end)
         end
     end
 })
 
-Tabs.Macro:AddSlider("PlayLoopDelaySlider", {
+Tabs.Macro:CreateSlider({
     Title = "⏱️ พักหลังเล่นจบ 1 รอบ (วินาที)",
-    Default = 3,
     Min = 1,
     Max = 15,
+    Default = 3,
     Rounding = 0,
     Callback = function(Value) PlayLoopDelay = Value end
 })
 
-Tabs.Settings:AddToggle("FixUIToggle", {
+Tabs.Settings:CreateToggle({
     Title = "⚙️ Auto Fix Dynamic UI Names",
     Default = true,
     Callback = function(Value) AutoFixUI = Value end
