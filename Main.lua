@@ -21,7 +21,7 @@ end
 
 print("[DEBUG] สร้าง Tab")
 
-MainTab:AddSection("🔍 Test Controls")
+MainTab:AddSection(" Test Controls")
 
 MainTab:AddButton(" Click  (Test Button)", function()
     print("[DEBUG] ปกติ")
@@ -33,8 +33,8 @@ MainTab:AddButton(" Click  (Test Button)", function()
     end)
 end)
 
-MainTab:AddToggle("🟢Test Toggle", false, function(Value)
-    print("[DEBUG] 🔘Toggle State เปลี่ยนเป็น: " .. tostring(Value))
+MainTab:AddToggle("Test Toggle", false, function(Value)
+    print("[DEBUG] Toggle State เปลี่ยนเป็น: " .. tostring(Value))
 end)
 
 MainTab:AddSlider("Test Slider", 1, 100, 50, function(Value)
