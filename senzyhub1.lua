@@ -1,21 +1,21 @@
-if _0x0000()._0x0001 then
-_0x0000()._0x0001._0x0002 = false
-if _0x0000()._0x0001._0x0003 then
-pcall(function() _0x0000()._0x0001._0x0003:_0x0004() end)
+if getgenv().AutoRollSystem then
+getgenv().AutoRollSystem.Enabled = false
+if getgenv().AutoRollSystem.Connection then
+pcall(function() getgenv().AutoRollSystem.Connection:Disconnect() end)
 end
-_0x0000()._0x0001 = nil
+getgenv().AutoRollSystem = nil
 end
-_0x0000()._0x0001 = {
-_0x0002 = false,
-_0x0003 = nil
+getgenv().AutoRollSystem = {
+Enabled = false,
+Connection = nil
 }
-local _0x0005 = _0x0006:_0x0007(string.char(80, 108, 97, 121, 101, 114, 115))
-local _0x0008 = _0x0006:_0x0007(string.char(82, 101, 112, 108, 105, 99, 97, 116, 101, 100, 83, 116, 111, 114, 97, 103, 101))
-local _0x0009 = _0x0005._0x0009
-local _0x000a = {
+local Players = game:GetService(string.char(80, 108, 97, 121, 101, 114, 115))
+local ReplicatedStorage = game:GetService(string.char(82, 101, 112, 108, 105, 99, 97, 116, 101, 100, 83, 116, 111, 114, 97, 103, 101))
+local LocalPlayer = Players.LocalPlayer
+local RarityList = {
 string.char(65, 108, 108, 32, 82, 97, 114, 105, 116, 105, 101, 115), string.char(67, 111, 109, 109, 111, 110), string.char(82, 97, 114, 101), string.char(69, 112, 105, 99), string.char(76, 101, 103, 101, 110, 100, 97, 114, 121), string.char(77, 121, 116, 104, 105, 99), string.char(71, 111, 100), string.char(83, 101, 99, 114, 101, 116), string.char(76, 105, 109, 105, 116, 101, 100)
 }
-local _0x000b = {
+local CharacterList = {
 string.char(65, 108, 108, 32, 67, 104, 97, 114, 97, 99, 116, 101, 114, 115), string.char(83, 97, 105, 116, 97, 109, 97), string.char(76, 117, 102, 102, 121), string.char(82, 105, 109, 117, 114, 117), string.char(83, 104, 105, 110, 114, 97), string.char(65, 114, 116, 104, 117, 114), string.char(83, 117, 107, 117, 110, 97, 32, 40, 72, 101, 105, 97, 110, 41), string.char(85, 115, 115, 111, 112), string.char(77, 97, 110, 106, 105),
 string.char(71, 111, 106, 111), string.char(71, 111, 107, 117), string.char(72, 111, 115, 104, 105, 110, 97), string.char(89, 104, 119, 97, 116, 99, 104), string.char(66, 97, 110), string.char(79, 107, 117, 114, 117, 110), string.char(77, 97, 107, 105), string.char(74, 117, 110, 119, 111, 111), string.char(83, 116, 97, 114, 107), string.char(77, 111, 98),
 string.char(69, 114, 119, 105, 110), string.char(90, 111, 114, 111), string.char(73, 116, 97, 100, 111, 114, 105), string.char(71, 117, 116, 115), string.char(83, 97, 107, 117, 114, 97), string.char(75, 111, 107, 117, 115, 104, 105, 98, 111), string.char(78, 97, 114, 117, 116, 111, 67, 108, 111, 110, 101), string.char(78, 97, 114, 117, 116, 111),
@@ -28,328 +28,328 @@ string.char(71, 101, 110, 111, 115), string.char(82, 105, 107, 97), string.char(
 string.char(83, 105, 109, 111, 32, 72, 97, 121, 104, 97), string.char(78, 97, 110, 97, 109, 105), string.char(71, 111, 116, 111), string.char(71, 111, 106, 111, 32, 40, 83, 104, 105, 98, 117, 121, 97, 41), string.char(65, 105, 122, 101, 110, 32, 40, 84, 114, 97, 110, 115, 99, 101, 110, 100, 101, 110, 116, 41), string.char(68, 105, 111), string.char(74, 105, 114, 101, 110),
 string.char(76, 101, 108, 111, 117, 99, 104), string.char(83, 97, 105, 116, 97, 109, 97, 32, 40, 83, 101, 114, 105, 111, 117, 115, 41), string.char(83, 117, 107, 117, 110, 97), string.char(89, 97, 109, 97, 109, 111, 116, 111), string.char(66, 114, 105, 116, 97, 105, 110, 32, 65, 114, 109, 121)
 }
-local _0x000c = {}
-local _0x000d = false
-local _0x000e = false
-local _0x000f = false
-local _0x0010 = false
-local _0x0011 = false
-local _0x0012 = 0.1
-local _0x0013 = 2.0
-local _0x0014 = nil
-local _0x0015 = _0x0009._0x0016
-local _0x0017 = nil
-local _0x0018 = nil
-local function _0x0019(_0x001a)
-if not _0x001a then return false end
-if _0x000c[string.char(65, 108, 108, 32, 82, 97, 114, 105, 116, 105, 101, 115)] or _0x000c[string.char(65, 108, 108, 32, 67, 104, 97, 114, 97, 99, 116, 101, 114, 115)] then
+local SelectedTargets = {}
+local AutoSummonEnabled = false
+local AutoBuyEnabled = false
+local AutoMergeEnabled = false
+local DisplayTagEnabled = false
+local isBuying = false
+local ROLL_SPEED = 0.1
+local MERGE_DELAY = 2.0
+local latestRollData = nil
+local originalDisplayName = LocalPlayer.DisplayName
+local RollRemote = nil
+local BuyRemote = nil
+local function isTargetSelected(nameOrRarity)
+if not nameOrRarity then return false end
+if SelectedTargets[string.char(65, 108, 108, 32, 82, 97, 114, 105, 116, 105, 101, 115)] or SelectedTargets[string.char(65, 108, 108, 32, 67, 104, 97, 114, 97, 99, 116, 101, 114, 115)] then
 return true
 end
-local _0x001b = string.lower(tostring(_0x001a))
-for _0x001c, _0x001d in pairs(_0x000c) do
-if _0x001d and string.lower(tostring(_0x001c)) == _0x001b then
+local target = string.lower(tostring(nameOrRarity))
+for selectedName, isSelected in pairs(SelectedTargets) do
+if isSelected and string.lower(tostring(selectedName)) == target then
 return true
 end
 end
 return false
 end
-local function _0x001e(_0x001f)
-if not _0x001f or not _0x000e or _0x0011 then
+local function checkAndBuyFromData(data)
+if not data or not AutoBuyEnabled or isBuying then
 return
 end
-local _0x0020 = _0x001f._0x0020
-local _0x0021 = _0x001f._0x0021
-local _0x0022 = _0x001f._0x0022
-if not _0x0020 then return end
-local _0x0023 = {}
-for _0x0024, _0x0025 in pairs(_0x0020) do
-if _0x0026(_0x0025) == string.char(116, 97, 98, 108, 101) then
-local _0x0027 = _0x0025._0x0028 or _0x0025._0x0027
-local _0x0029 = _0x0025._0x002a or _0x0025._0x002b or _0x0025._0x002c
-local _0x002d = _0x0025._0x002e or _0x0025._0x002d or _0x0025._0x002f or _0x0025._0x0030
-local _0x0031 = tonumber(_0x0024) or _0x0025._0x0032 or _0x0025._0x0033
-local _0x0034 = _0x0019(_0x0027) or _0x0019(_0x0029) or _0x0019(_0x002d)
-if _0x0034 then
-table.insert(_0x0023, {
-_0x0031 = _0x0031 or _0x0024,
-_0x0025 = _0x0025
+local charactersList = data.charactersList
+local rollId = data.rollId
+local plot = data.plot
+if not charactersList then return end
+local matchingSlots = {}
+for slotKey, charData in pairs(charactersList) do
+if typeof(charData) == string.char(116, 97, 98, 108, 101) then
+local rarity = charData.Rarity or charData.rarity
+local charName = charData.Name or charData.name or charData.Character
+local mutation = charData.Mutation or charData.mutation or charData.Trait or charData.trait
+local slotIndex = tonumber(slotKey) or charData.Slot or charData.slot
+local matchFound = isTargetSelected(rarity) or isTargetSelected(charName) or isTargetSelected(mutation)
+if matchFound then
+table.insert(matchingSlots, {
+slotIndex = slotIndex or slotKey,
+charData = charData
 })
 end
 end
 end
-if #_0x0023 > 0 then
-_0x0011 = true
-_0x0035._0x0036(function()
-for _0x0037 = 1, 8 do
-for _0x0038, _0x0039 in ipairs(_0x0023) do
-local _0x0031 = tonumber(_0x0039._0x0031)
-if _0x0021 and _0x0031 and _0x0018 then
+if #matchingSlots > 0 then
+isBuying = true
+task.spawn(function()
+for retry = 1, 8 do
+for _, item in ipairs(matchingSlots) do
+local slotIndex = tonumber(item.slotIndex)
+if rollId and slotIndex and BuyRemote then
 pcall(function()
-_0x0018:_0x003a(_0x0021, _0x0031)
+BuyRemote:FireServer(rollId, slotIndex)
 end)
 end
 end
-if _0x0022 then
-for _0x0038, _0x003b in ipairs(_0x0022:_0x003c()) do
-if _0x003b:_0x003d(string.char(80, 114, 111, 120, 105, 109, 105, 116, 121, 80, 114, 111, 109, 112, 116)) and _0x003b._0x002a ~= string.char(82, 111, 108, 108, 80, 114, 111, 109, 112, 116) then
+if plot then
+for _, obj in ipairs(plot:GetDescendants()) do
+if obj:IsA(string.char(80, 114, 111, 120, 105, 109, 105, 116, 121, 80, 114, 111, 109, 112, 116)) and obj.Name ~= string.char(82, 111, 108, 108, 80, 114, 111, 109, 112, 116) then
 pcall(function()
-if _0x003e then
-_0x003e(_0x003b, 0)
+if fireproximityprompt then
+fireproximityprompt(obj, 0)
 end
 end)
 end
 end
 end
-_0x0035._0x003f(0.1)
+task.wait(0.1)
 end
-_0x0011 = false
+isBuying = false
 end)
 end
 end
-local _0x0043 = _0x0044(_0x0006:_0x0045(string.char(104, 116, 116, 112, 115, 58, 47, 47, 103, 105, 116, 104, 117, 98, 46, 99, 111, 109, 47, 100, 97, 119, 105, 100, 45, 115, 99, 114, 105, 112, 116, 115, 47, 70, 108, 117, 101, 110, 116, 47, 114, 101, 108, 101, 97, 115, 101, 115, 47, 108, 97, 116, 101, 115, 116, 47, 100, 111, 119, 110, 108, 111, 97, 100, 47, 109, 97, 105, 110, 46, 108, 117, 97)))()
-local _0x0046 = _0x0044(_0x0006:_0x0045(string.char(104, 116, 116, 112, 115, 58, 47, 47, 114, 97, 119, 46, 103, 105, 116, 104, 117, 98, 117, 115, 101, 114, 99, 111, 110, 116, 101, 110, 116, 46, 99, 111, 109, 47, 100, 97, 119, 105, 100, 45, 115, 99, 114, 105, 112, 116, 115, 47, 70, 108, 117, 101, 110, 116, 47, 109, 97, 115, 116, 101, 114, 47, 65, 100, 100, 111, 110, 115, 47, 83, 97, 118, 101, 77, 97, 110, 97, 103, 101, 114, 46, 108, 117, 97)))()
-local _0x0047 = _0x0044(_0x0006:_0x0045(string.char(104, 116, 116, 112, 115, 58, 47, 47, 114, 97, 119, 46, 103, 105, 116, 104, 117, 98, 117, 115, 101, 114, 99, 111, 110, 116, 101, 110, 116, 46, 99, 111, 109, 47, 100, 97, 119, 105, 100, 45, 115, 99, 114, 105, 112, 116, 115, 47, 70, 108, 117, 101, 110, 116, 47, 109, 97, 115, 116, 101, 114, 47, 65, 100, 100, 111, 110, 115, 47, 73, 110, 116, 101, 114, 102, 97, 99, 101, 77, 97, 110, 97, 103, 101, 114, 46, 108, 117, 97)))()
-local _0x0048 = _0x0043:_0x0049({
-_0x004a = string.char(83, 101, 110, 122, 121, 72, 117, 98),
-_0x004b = "",
-_0x004c = 160,
-_0x004d = _0x004e._0x004f(580, 480),
-_0x0042 = false,
-_0x0050 = string.char(68, 97, 114, 107),
-_0x0051 = _0x0052._0x0053._0x0054
+local Fluent = loadstring(game:HttpGet(string.char(104, 116, 116, 112, 115, 58, 47, 47, 103, 105, 116, 104, 117, 98, 46, 99, 111, 109, 47, 100, 97, 119, 105, 100, 45, 115, 99, 114, 105, 112, 116, 115, 47, 70, 108, 117, 101, 110, 116, 47, 114, 101, 108, 101, 97, 115, 101, 115, 47, 108, 97, 116, 101, 115, 116, 47, 100, 111, 119, 110, 108, 111, 97, 100, 47, 109, 97, 105, 110, 46, 108, 117, 97)))()
+local SaveManager = loadstring(game:HttpGet(string.char(104, 116, 116, 112, 115, 58, 47, 47, 114, 97, 119, 46, 103, 105, 116, 104, 117, 98, 117, 115, 101, 114, 99, 111, 110, 116, 101, 110, 116, 46, 99, 111, 109, 47, 100, 97, 119, 105, 100, 45, 115, 99, 114, 105, 112, 116, 115, 47, 70, 108, 117, 101, 110, 116, 47, 109, 97, 115, 116, 101, 114, 47, 65, 100, 100, 111, 110, 115, 47, 83, 97, 118, 101, 77, 97, 110, 97, 103, 101, 114, 46, 108, 117, 97)))()
+local InterfaceManager = loadstring(game:HttpGet(string.char(104, 116, 116, 112, 115, 58, 47, 47, 114, 97, 119, 46, 103, 105, 116, 104, 117, 98, 117, 115, 101, 114, 99, 111, 110, 116, 101, 110, 116, 46, 99, 111, 109, 47, 100, 97, 119, 105, 100, 45, 115, 99, 114, 105, 112, 116, 115, 47, 70, 108, 117, 101, 110, 116, 47, 109, 97, 115, 116, 101, 114, 47, 65, 100, 100, 111, 110, 115, 47, 73, 110, 116, 101, 114, 102, 97, 99, 101, 77, 97, 110, 97, 103, 101, 114, 46, 108, 117, 97)))()
+local Window = Fluent:CreateWindow({
+Title = string.char(83, 101, 110, 122, 121, 72, 117, 98),
+SubTitle = "",
+TabWidth = 160,
+Size = UDim2.fromOffset(580, 480),
+Acrylic = false,
+Theme = string.char(68, 97, 114, 107),
+MinimizeKey = Enum.KeyCode.LeftControl
 })
-local _0x0055 = {
-_0x0056 = _0x0048:_0x0057({ _0x004a = string.char(83, 117, 109, 109, 111, 110, 32, 38, 32, 66, 117, 121), _0x0058 = string.char(115, 104, 111, 112, 112, 105, 110, 103, 45, 99, 97, 114, 116) }),
-_0x0059 = _0x0048:_0x0057({ _0x004a = string.char(65, 117, 116, 111, 32, 77, 101, 114, 103, 101), _0x0058 = string.char(115, 112, 97, 114, 107, 108, 101, 115) }),
-_0x005a = _0x0048:_0x0057({ _0x004a = string.char(68, 105, 115, 112, 108, 97, 121, 32, 38, 32, 84, 97, 103, 115), _0x0058 = string.char(117, 115, 101, 114) }),
-_0x005b = _0x0048:_0x0057({ _0x004a = string.char(83, 101, 116, 116, 105, 110, 103, 115), _0x0058 = string.char(115, 101, 116, 116, 105, 110, 103, 115) })
+local Tabs = {
+Summon = Window:AddTab({ Title = string.char(83, 117, 109, 109, 111, 110, 32, 38, 32, 66, 117, 121), Icon = string.char(115, 104, 111, 112, 112, 105, 110, 103, 45, 99, 97, 114, 116) }),
+Merge = Window:AddTab({ Title = string.char(65, 117, 116, 111, 32, 77, 101, 114, 103, 101), Icon = string.char(115, 112, 97, 114, 107, 108, 101, 115) }),
+Visuals = Window:AddTab({ Title = string.char(68, 105, 115, 112, 108, 97, 121, 32, 38, 32, 84, 97, 103, 115), Icon = string.char(117, 115, 101, 114) }),
+Settings = Window:AddTab({ Title = string.char(83, 101, 116, 116, 105, 110, 103, 115), Icon = string.char(115, 101, 116, 116, 105, 110, 103, 115) })
 }
-_0x0055._0x0056:_0x005f(string.char(65, 117, 116, 111, 32, 82, 111, 108, 108, 32, 38, 32, 80, 117, 114, 99, 104, 97, 115, 101))
-local _0x0060 = _0x0055._0x0056:_0x0061(string.char(65, 117, 116, 111, 83, 117, 109, 109, 111, 110, 84, 111, 103, 103, 108, 101), {
-_0x004a = string.char(65, 117, 116, 111, 32, 83, 117, 109, 109, 111, 110),
-_0x0062 = string.char(65, 117, 116, 111, 109, 97, 116, 105, 99, 97, 108, 108, 121, 32, 116, 114, 105, 103, 103, 101, 114, 115, 32, 115, 117, 109, 109, 111, 110, 105, 110, 103, 32, 112, 114, 111, 109, 112, 116, 115),
-_0x0063 = false
+Tabs.Summon:AddSection(string.char(65, 117, 116, 111, 32, 82, 111, 108, 108, 32, 38, 32, 80, 117, 114, 99, 104, 97, 115, 101))
+local AutoSummonToggle = Tabs.Summon:AddToggle(string.char(65, 117, 116, 111, 83, 117, 109, 109, 111, 110, 84, 111, 103, 103, 108, 101), {
+Title = string.char(65, 117, 116, 111, 32, 83, 117, 109, 109, 111, 110),
+Description = string.char(65, 117, 116, 111, 109, 97, 116, 105, 99, 97, 108, 108, 121, 32, 116, 114, 105, 103, 103, 101, 114, 115, 32, 115, 117, 109, 109, 111, 110, 105, 110, 103, 32, 112, 114, 111, 109, 112, 116, 115),
+Default = false
 })
-_0x0060:_0x0064(function(_0x0065)
-_0x000d = _0x0065
-_0x0000()._0x0001._0x0002 = _0x0065
+AutoSummonToggle:OnChanged(function(Value)
+AutoSummonEnabled = Value
+getgenv().AutoRollSystem.Enabled = Value
 end)
-local _0x0066 = _0x0055._0x0056:_0x0061(string.char(65, 117, 116, 111, 66, 117, 121, 84, 111, 103, 103, 108, 101), {
-_0x004a = string.char(65, 117, 116, 111, 32, 66, 117, 121),
-_0x0062 = string.char(65, 117, 116, 111, 109, 97, 116, 105, 99, 97, 108, 108, 121, 32, 98, 117, 121, 115, 32, 115, 101, 108, 101, 99, 116, 101, 100, 32, 117, 110, 105, 116, 115, 32, 98, 97, 115, 101, 100, 32, 111, 110, 32, 102, 105, 108, 116, 101, 114, 115, 32, 98, 101, 108, 111, 119),
-_0x0063 = false
+local AutoBuyToggle = Tabs.Summon:AddToggle(string.char(65, 117, 116, 111, 66, 117, 121, 84, 111, 103, 103, 108, 101), {
+Title = string.char(65, 117, 116, 111, 32, 66, 117, 121),
+Description = string.char(65, 117, 116, 111, 109, 97, 116, 105, 99, 97, 108, 108, 121, 32, 98, 117, 121, 115, 32, 115, 101, 108, 101, 99, 116, 101, 100, 32, 117, 110, 105, 116, 115, 32, 98, 97, 115, 101, 100, 32, 111, 110, 32, 102, 105, 108, 116, 101, 114, 115, 32, 98, 101, 108, 111, 119),
+Default = false
 })
-_0x0066:_0x0064(function(_0x0065)
-_0x000e = _0x0065
-if _0x0065 then
-_0x0011 = false
-if _0x0014 then
-_0x001e(_0x0014)
+AutoBuyToggle:OnChanged(function(Value)
+AutoBuyEnabled = Value
+if Value then
+isBuying = false
+if latestRollData then
+checkAndBuyFromData(latestRollData)
 end
 end
 end)
-_0x0055._0x0056:_0x005f(string.char(80, 117, 114, 99, 104, 97, 115, 101, 32, 84, 97, 114, 103, 101, 116, 115))
-_0x0055._0x0056:_0x0067({
-_0x004a = string.char(84, 97, 114, 103, 101, 116, 32, 70, 105, 108, 116, 101, 114, 105, 110, 103, 32, 73, 110, 102, 111),
-_0x0068 = string.char(83, 101, 108, 101, 99, 116, 105, 110, 103, 32, 39, 65, 108, 108, 32, 82, 97, 114, 105, 116, 105, 101, 115, 39, 32, 111, 114, 32, 39, 65, 108, 108, 32, 67, 104, 97, 114, 97, 99, 116, 101, 114, 115, 39, 32, 119, 105, 108, 108, 32, 97, 117, 116, 111, 109, 97, 116, 105, 99, 97, 108, 108, 121, 32, 112, 117, 114, 99, 104, 97, 115, 101, 32, 97, 108, 108, 32, 114, 111, 108, 108, 101, 100, 32, 117, 110, 105, 116, 115, 32, 119, 105, 116, 104, 105, 110, 32, 116, 104, 97, 116, 32, 99, 97, 116, 101, 103, 111, 114, 121, 32, 114, 101, 103, 97, 114, 100, 108, 101, 115, 115, 32, 111, 102, 32, 105, 110, 100, 105, 118, 105, 100, 117, 97, 108, 32, 99, 104, 111, 105, 99, 101, 115, 46)
+Tabs.Summon:AddSection(string.char(80, 117, 114, 99, 104, 97, 115, 101, 32, 84, 97, 114, 103, 101, 116, 115))
+Tabs.Summon:AddParagraph({
+Title = string.char(84, 97, 114, 103, 101, 116, 32, 70, 105, 108, 116, 101, 114, 105, 110, 103, 32, 73, 110, 102, 111),
+Content = string.char(83, 101, 108, 101, 99, 116, 105, 110, 103, 32, 39, 65, 108, 108, 32, 82, 97, 114, 105, 116, 105, 101, 115, 39, 32, 111, 114, 32, 39, 65, 108, 108, 32, 67, 104, 97, 114, 97, 99, 116, 101, 114, 115, 39, 32, 119, 105, 108, 108, 32, 97, 117, 116, 111, 109, 97, 116, 105, 99, 97, 108, 108, 121, 32, 112, 117, 114, 99, 104, 97, 115, 101, 32, 97, 108, 108, 32, 114, 111, 108, 108, 101, 100, 32, 117, 110, 105, 116, 115, 32, 119, 105, 116, 104, 105, 110, 32, 116, 104, 97, 116, 32, 99, 97, 116, 101, 103, 111, 114, 121, 32, 114, 101, 103, 97, 114, 100, 108, 101, 115, 115, 32, 111, 102, 32, 105, 110, 100, 105, 118, 105, 100, 117, 97, 108, 32, 99, 104, 111, 105, 99, 101, 115, 46)
 })
-local _0x0069 = _0x0055._0x0056:_0x006a(string.char(82, 97, 114, 105, 116, 121, 68, 114, 111, 112, 100, 111, 119, 110), {
-_0x004a = string.char(83, 101, 108, 101, 99, 116, 32, 84, 97, 114, 103, 101, 116, 32, 82, 97, 114, 105, 116, 105, 101, 115),
-_0x0062 = string.char(83, 101, 108, 101, 99, 116, 105, 110, 103, 32, 97, 32, 114, 97, 114, 105, 116, 121, 32, 119, 105, 108, 108, 32, 112, 117, 114, 99, 104, 97, 115, 101, 32, 65, 76, 76, 32, 117, 110, 105, 116, 115, 32, 98, 101, 108, 111, 110, 103, 105, 110, 103, 32, 116, 111, 32, 116, 104, 97, 116, 32, 116, 105, 101, 114, 46),
-_0x006b = _0x000a,
-_0x006c = true,
-_0x0063 = {}
+local RarityDropdown = Tabs.Summon:AddDropdown(string.char(82, 97, 114, 105, 116, 121, 68, 114, 111, 112, 100, 111, 119, 110), {
+Title = string.char(83, 101, 108, 101, 99, 116, 32, 84, 97, 114, 103, 101, 116, 32, 82, 97, 114, 105, 116, 105, 101, 115),
+Description = string.char(83, 101, 108, 101, 99, 116, 105, 110, 103, 32, 97, 32, 114, 97, 114, 105, 116, 121, 32, 119, 105, 108, 108, 32, 112, 117, 114, 99, 104, 97, 115, 101, 32, 65, 76, 76, 32, 117, 110, 105, 116, 115, 32, 98, 101, 108, 111, 110, 103, 105, 110, 103, 32, 116, 111, 32, 116, 104, 97, 116, 32, 116, 105, 101, 114, 46),
+Values = RarityList,
+Multi = true,
+Default = {}
 })
-_0x0069:_0x0064(function(_0x0065)
-for _0x0038, _0x006d in ipairs(_0x000a) do
-_0x000c[_0x006d] = false
+RarityDropdown:OnChanged(function(Value)
+for _, r in ipairs(RarityList) do
+SelectedTargets[r] = false
 end
-if type(_0x0065) == string.char(116, 97, 98, 108, 101) then
-for _0x006e, _0x006f in pairs(_0x0065) do
-if type(_0x006e) == string.char(115, 116, 114, 105, 110, 103) and _0x006f == true then
-_0x000c[_0x006e] = true
-elseif type(_0x006f) == string.char(115, 116, 114, 105, 110, 103) then
-_0x000c[_0x006f] = true
+if type(Value) == string.char(116, 97, 98, 108, 101) then
+for k, v in pairs(Value) do
+if type(k) == string.char(115, 116, 114, 105, 110, 103) and v == true then
+SelectedTargets[k] = true
+elseif type(v) == string.char(115, 116, 114, 105, 110, 103) then
+SelectedTargets[v] = true
 end
 end
 end
-if _0x000e then
-_0x0011 = false
-if _0x0014 then
-_0x001e(_0x0014)
+if AutoBuyEnabled then
+isBuying = false
+if latestRollData then
+checkAndBuyFromData(latestRollData)
 end
 end
 end)
-local _0x0070 = _0x0055._0x0056:_0x006a(string.char(67, 104, 97, 114, 97, 99, 116, 101, 114, 68, 114, 111, 112, 100, 111, 119, 110), {
-_0x004a = string.char(83, 101, 108, 101, 99, 116, 32, 84, 97, 114, 103, 101, 116, 32, 67, 104, 97, 114, 97, 99, 116, 101, 114, 115),
-_0x0062 = string.char(83, 101, 108, 101, 99, 116, 32, 115, 112, 101, 99, 105, 102, 105, 99, 32, 117, 110, 105, 116, 32, 110, 97, 109, 101, 115, 32, 116, 111, 32, 97, 117, 116, 111, 45, 98, 117, 121, 32, 119, 104, 101, 110, 32, 115, 117, 109, 109, 111, 110, 101, 100, 46),
-_0x006b = _0x000b,
-_0x006c = true,
-_0x0063 = {}
+local CharacterDropdown = Tabs.Summon:AddDropdown(string.char(67, 104, 97, 114, 97, 99, 116, 101, 114, 68, 114, 111, 112, 100, 111, 119, 110), {
+Title = string.char(83, 101, 108, 101, 99, 116, 32, 84, 97, 114, 103, 101, 116, 32, 67, 104, 97, 114, 97, 99, 116, 101, 114, 115),
+Description = string.char(83, 101, 108, 101, 99, 116, 32, 115, 112, 101, 99, 105, 102, 105, 99, 32, 117, 110, 105, 116, 32, 110, 97, 109, 101, 115, 32, 116, 111, 32, 97, 117, 116, 111, 45, 98, 117, 121, 32, 119, 104, 101, 110, 32, 115, 117, 109, 109, 111, 110, 101, 100, 46),
+Values = CharacterList,
+Multi = true,
+Default = {}
 })
-_0x0070:_0x0064(function(_0x0065)
-for _0x0038, _0x0071 in ipairs(_0x000b) do
-_0x000c[_0x0071] = false
+CharacterDropdown:OnChanged(function(Value)
+for _, c in ipairs(CharacterList) do
+SelectedTargets[c] = false
 end
-if type(_0x0065) == string.char(116, 97, 98, 108, 101) then
-for _0x006e, _0x006f in pairs(_0x0065) do
-if type(_0x006e) == string.char(115, 116, 114, 105, 110, 103) and _0x006f == true then
-_0x000c[_0x006e] = true
-elseif type(_0x006f) == string.char(115, 116, 114, 105, 110, 103) then
-_0x000c[_0x006f] = true
+if type(Value) == string.char(116, 97, 98, 108, 101) then
+for k, v in pairs(Value) do
+if type(k) == string.char(115, 116, 114, 105, 110, 103) and v == true then
+SelectedTargets[k] = true
+elseif type(v) == string.char(115, 116, 114, 105, 110, 103) then
+SelectedTargets[v] = true
 end
 end
 end
-if _0x000e then
-_0x0011 = false
-if _0x0014 then
-_0x001e(_0x0014)
+if AutoBuyEnabled then
+isBuying = false
+if latestRollData then
+checkAndBuyFromData(latestRollData)
 end
 end
 end)
-local _0x0072 = _0x0055._0x0056:_0x0073(string.char(82, 111, 108, 108, 83, 112, 101, 101, 100, 83, 108, 105, 100, 101, 114), {
-_0x004a = string.char(83, 117, 109, 109, 111, 110, 32, 83, 112, 101, 101, 100, 32, 68, 101, 108, 97, 121),
-_0x0062 = string.char(68, 101, 108, 97, 121, 32, 105, 110, 116, 101, 114, 118, 97, 108, 32, 98, 101, 116, 119, 101, 101, 110, 32, 115, 117, 109, 109, 111, 110, 32, 116, 114, 105, 103, 103, 101, 114, 115, 32, 40, 115, 101, 99, 111, 110, 100, 115, 41),
-_0x0063 = 0.1,
-_0x0074 = 0.05,
-_0x0075 = 1.0,
-_0x0076 = 2
+local SpeedSlider = Tabs.Summon:AddSlider(string.char(82, 111, 108, 108, 83, 112, 101, 101, 100, 83, 108, 105, 100, 101, 114), {
+Title = string.char(83, 117, 109, 109, 111, 110, 32, 83, 112, 101, 101, 100, 32, 68, 101, 108, 97, 121),
+Description = string.char(68, 101, 108, 97, 121, 32, 105, 110, 116, 101, 114, 118, 97, 108, 32, 98, 101, 116, 119, 101, 101, 110, 32, 115, 117, 109, 109, 111, 110, 32, 116, 114, 105, 103, 103, 101, 114, 115, 32, 40, 115, 101, 99, 111, 110, 100, 115, 41),
+Default = 0.1,
+Min = 0.05,
+Max = 1.0,
+Rounding = 2
 })
-_0x0072:_0x0064(function(_0x0065)
-_0x0012 = _0x0065
+SpeedSlider:OnChanged(function(Value)
+ROLL_SPEED = Value
 end)
-_0x0055._0x0059:_0x005f(string.char(80, 114, 111, 120, 105, 109, 105, 116, 121, 32, 77, 101, 114, 103, 101, 32, 83, 121, 115, 116, 101, 109))
-local _0x0079 = _0x0055._0x0059:_0x0061(string.char(65, 117, 116, 111, 77, 101, 114, 103, 101, 84, 111, 103, 103, 108, 101), {
-_0x004a = string.char(65, 117, 116, 111, 32, 77, 101, 114, 103, 101, 32, 40, 76, 101, 118, 101, 108, 32, 85, 112, 41),
-_0x0062 = string.char(65, 117, 116, 111, 109, 97, 116, 105, 99, 97, 108, 108, 121, 32, 116, 114, 105, 103, 103, 101, 114, 115, 32, 76, 101, 118, 101, 108, 32, 85, 112, 32, 112, 114, 111, 109, 112, 116, 115, 32, 97, 99, 114, 111, 115, 115, 32, 97, 108, 108, 32, 97, 118, 97, 105, 108, 97, 98, 108, 101, 32, 99, 104, 97, 114, 97, 99, 116, 101, 114, 32, 115, 108, 111, 116, 115),
-_0x0063 = false
+Tabs.Merge:AddSection(string.char(80, 114, 111, 120, 105, 109, 105, 116, 121, 32, 77, 101, 114, 103, 101, 32, 83, 121, 115, 116, 101, 109))
+local AutoMergeToggle = Tabs.Merge:AddToggle(string.char(65, 117, 116, 111, 77, 101, 114, 103, 101, 84, 111, 103, 103, 108, 101), {
+Title = string.char(65, 117, 116, 111, 32, 77, 101, 114, 103, 101, 32, 40, 76, 101, 118, 101, 108, 32, 85, 112, 41),
+Description = string.char(65, 117, 116, 111, 109, 97, 116, 105, 99, 97, 108, 108, 121, 32, 116, 114, 105, 103, 103, 101, 114, 115, 32, 76, 101, 118, 101, 108, 32, 85, 112, 32, 112, 114, 111, 109, 112, 116, 115, 32, 97, 99, 114, 111, 115, 115, 32, 97, 108, 108, 32, 97, 118, 97, 105, 108, 97, 98, 108, 101, 32, 99, 104, 97, 114, 97, 99, 116, 101, 114, 32, 115, 108, 111, 116, 115),
+Default = false
 })
-_0x0079:_0x0064(function(_0x0065)
-_0x000f = _0x0065
+AutoMergeToggle:OnChanged(function(Value)
+AutoMergeEnabled = Value
 end)
-local _0x007a = _0x0055._0x0059:_0x0073(string.char(77, 101, 114, 103, 101, 68, 101, 108, 97, 121, 83, 108, 105, 100, 101, 114), {
-_0x004a = string.char(77, 101, 114, 103, 101, 32, 83, 112, 101, 101, 100, 32, 68, 101, 108, 97, 121),
-_0x0062 = string.char(73, 110, 116, 101, 114, 118, 97, 108, 32, 100, 101, 108, 97, 121, 32, 98, 101, 116, 119, 101, 101, 110, 32, 109, 101, 114, 103, 101, 32, 97, 116, 116, 101, 109, 112, 116, 115, 32, 40, 115, 101, 99, 111, 110, 100, 115, 41),
-_0x0063 = 2.0,
-_0x0074 = 0.1,
-_0x0075 = 5.0,
-_0x0076 = 1
+local DelaySlider = Tabs.Merge:AddSlider(string.char(77, 101, 114, 103, 101, 68, 101, 108, 97, 121, 83, 108, 105, 100, 101, 114), {
+Title = string.char(77, 101, 114, 103, 101, 32, 83, 112, 101, 101, 100, 32, 68, 101, 108, 97, 121),
+Description = string.char(73, 110, 116, 101, 114, 118, 97, 108, 32, 100, 101, 108, 97, 121, 32, 98, 101, 116, 119, 101, 101, 110, 32, 109, 101, 114, 103, 101, 32, 97, 116, 116, 101, 109, 112, 116, 115, 32, 40, 115, 101, 99, 111, 110, 100, 115, 41),
+Default = 2.0,
+Min = 0.1,
+Max = 5.0,
+Rounding = 1
 })
-_0x007a:_0x0064(function(_0x0065)
-_0x0013 = _0x0065
+DelaySlider:OnChanged(function(Value)
+MERGE_DELAY = Value
 end)
-_0x0055._0x005a:_0x005f(string.char(78, 97, 109, 101, 32, 84, 97, 103, 32, 67, 117, 115, 116, 111, 109, 105, 122, 97, 116, 105, 111, 110))
-local _0x007d = _0x0055._0x005a:_0x0061(string.char(68, 105, 115, 112, 108, 97, 121, 84, 97, 103, 84, 111, 103, 103, 108, 101), {
-_0x004a = string.char(69, 110, 97, 98, 108, 101, 32, 67, 117, 115, 116, 111, 109, 32, 78, 97, 109, 101, 32, 84, 97, 103),
-_0x0062 = string.char(79, 118, 101, 114, 114, 105, 100, 101, 115, 32, 111, 118, 101, 114, 104, 101, 97, 100, 32, 100, 105, 115, 112, 108, 97, 121, 32, 116, 101, 120, 116, 32, 116, 111, 32, 39, 83, 69, 78, 90, 89, 32, 72, 85, 66, 32, 79, 78, 32, 84, 79, 80, 39),
-_0x0063 = false
+Tabs.Visuals:AddSection(string.char(78, 97, 109, 101, 32, 84, 97, 103, 32, 67, 117, 115, 116, 111, 109, 105, 122, 97, 116, 105, 111, 110))
+local DisplayTagToggle = Tabs.Visuals:AddToggle(string.char(68, 105, 115, 112, 108, 97, 121, 84, 97, 103, 84, 111, 103, 103, 108, 101), {
+Title = string.char(69, 110, 97, 98, 108, 101, 32, 67, 117, 115, 116, 111, 109, 32, 78, 97, 109, 101, 32, 84, 97, 103),
+Description = string.char(79, 118, 101, 114, 114, 105, 100, 101, 115, 32, 111, 118, 101, 114, 104, 101, 97, 100, 32, 100, 105, 115, 112, 108, 97, 121, 32, 116, 101, 120, 116, 32, 116, 111, 32, 39, 83, 69, 78, 90, 89, 32, 72, 85, 66, 32, 79, 78, 32, 84, 79, 80, 39),
+Default = false
 })
-local function _0x007e(_0x007f)
-if not _0x007f then return end
-_0x0035._0x0036(function()
-local _0x0080 = _0x007f:_0x0081(string.char(72, 117, 109, 97, 110, 111, 105, 100), 5)
-if _0x0080 then
-_0x0080._0x0016 = _0x0010 and string.char(83, 69, 78, 90, 89, 32, 72, 85, 66, 32, 79, 78, 32, 84, 79, 80) or _0x0015
+local function UpdateOverheadDisplay(character)
+if not character then return end
+task.spawn(function()
+local humanoid = character:WaitForChild(string.char(72, 117, 109, 97, 110, 111, 105, 100), 5)
+if humanoid then
+humanoid.DisplayName = DisplayTagEnabled and string.char(83, 69, 78, 90, 89, 32, 72, 85, 66, 32, 79, 78, 32, 84, 79, 80) or originalDisplayName
 end
-for _0x0038, _0x003b in ipairs(_0x007f:_0x003c()) do
-if _0x003b:_0x003d(string.char(84, 101, 120, 116, 76, 97, 98, 101, 108)) and _0x003b._0x002a ~= string.char(84, 105, 116, 108, 101) then
-if _0x0010 then
-_0x003b._0x0082 = string.char(83, 69, 78, 90, 89, 32, 72, 85, 66, 32, 79, 78, 32, 84, 79, 80)
+for _, obj in ipairs(character:GetDescendants()) do
+if obj:IsA(string.char(84, 101, 120, 116, 76, 97, 98, 101, 108)) and obj.Name ~= string.char(84, 105, 116, 108, 101) then
+if DisplayTagEnabled then
+obj.Text = string.char(83, 69, 78, 90, 89, 32, 72, 85, 66, 32, 79, 78, 32, 84, 79, 80)
 end
 end
-end
-end)
-end
-_0x007d:_0x0064(function(_0x0065)
-_0x0010 = _0x0065
-if _0x0009._0x002c then
-_0x007e(_0x0009._0x002c)
 end
 end)
-_0x0009._0x0083:_0x0084(function(_0x007f)
-if _0x0010 then
-_0x007e(_0x007f)
+end
+DisplayTagToggle:OnChanged(function(Value)
+DisplayTagEnabled = Value
+if LocalPlayer.Character then
+UpdateOverheadDisplay(LocalPlayer.Character)
 end
 end)
-_0x0035._0x0036(function()
+LocalPlayer.CharacterAdded:Connect(function(character)
+if DisplayTagEnabled then
+UpdateOverheadDisplay(character)
+end
+end)
+task.spawn(function()
 pcall(function()
-local _0x0087 = _0x0008
-local _0x0088 = _0x0087:_0x0081(string.char(82, 101, 109, 111, 116, 101, 115), 10)
-if _0x0088 then
-local _0x0089 = _0x0088:_0x0081(string.char(67, 104, 97, 114, 97, 99, 116, 101, 114, 115), 10)
-if _0x0089 then
-_0x0017 = _0x0089:_0x0081(string.char(82, 111, 108, 108), 10)
-_0x0018 = _0x0089:_0x0081(string.char(66, 117, 121), 10)
+local RS = ReplicatedStorage
+local Remotes = RS:WaitForChild(string.char(82, 101, 109, 111, 116, 101, 115), 10)
+if Remotes then
+local CharactersRemotes = Remotes:WaitForChild(string.char(67, 104, 97, 114, 97, 99, 116, 101, 114, 115), 10)
+if CharactersRemotes then
+RollRemote = CharactersRemotes:WaitForChild(string.char(82, 111, 108, 108), 10)
+BuyRemote = CharactersRemotes:WaitForChild(string.char(66, 117, 121), 10)
 end
 end
 end)
-if _0x0017 then
-_0x0000()._0x0001._0x0003 = _0x0017._0x008a:_0x0084(function(...)
-local _0x008b = {...}
-local _0x0020, _0x0021, _0x0022
-for _0x0038, _0x008c in ipairs(_0x008b) do
-if _0x0026(_0x008c) == string.char(116, 97, 98, 108, 101) then _0x0020 = _0x008c
-elseif _0x0026(_0x008c) == string.char(110, 117, 109, 98, 101, 114) then _0x0021 = _0x008c
-elseif _0x0026(_0x008c) == string.char(73, 110, 115, 116, 97, 110, 99, 101) then _0x0022 = _0x008c end
+if RollRemote then
+getgenv().AutoRollSystem.Connection = RollRemote.OnClientEvent:Connect(function(...)
+local args = {...}
+local charactersList, rollId, plot
+for _, arg in ipairs(args) do
+if typeof(arg) == string.char(116, 97, 98, 108, 101) then charactersList = arg
+elseif typeof(arg) == string.char(110, 117, 109, 98, 101, 114) then rollId = arg
+elseif typeof(arg) == string.char(73, 110, 115, 116, 97, 110, 99, 101) then plot = arg end
 end
-if not _0x0020 then return end
-_0x0014 = {_0x0020 = _0x0020, _0x0021 = _0x0021, _0x0022 = _0x0022}
-if _0x000e then
-_0x001e(_0x0014)
-end
-end)
+if not charactersList then return end
+latestRollData = {charactersList = charactersList, rollId = rollId, plot = plot}
+if AutoBuyEnabled then
+checkAndBuyFromData(latestRollData)
 end
 end)
-_0x0035._0x0036(function()
+end
+end)
+task.spawn(function()
 while true do
-if _0x000d and not _0x0011 then
+if AutoSummonEnabled and not isBuying then
 pcall(function()
-for _0x0038, _0x003b in ipairs(_0x008f:_0x003c()) do
-if _0x003b:_0x003d(string.char(80, 114, 111, 120, 105, 109, 105, 116, 121, 80, 114, 111, 109, 112, 116)) and _0x003b._0x002a == string.char(82, 111, 108, 108, 80, 114, 111, 109, 112, 116) then
-if _0x003e then
-_0x003e(_0x003b, 0)
+for _, obj in ipairs(workspace:GetDescendants()) do
+if obj:IsA(string.char(80, 114, 111, 120, 105, 109, 105, 116, 121, 80, 114, 111, 109, 112, 116)) and obj.Name == string.char(82, 111, 108, 108, 80, 114, 111, 109, 112, 116) then
+if fireproximityprompt then
+fireproximityprompt(obj, 0)
 end
 end
 end
 end)
 end
-_0x0035._0x003f(_0x0012)
+task.wait(ROLL_SPEED)
 end
 end)
-local function _0x0090()
-for _0x0038, _0x0091 in ipairs(_0x008f:_0x003c()) do
-if _0x0091:_0x003d(string.char(80, 114, 111, 120, 105, 109, 105, 116, 121, 80, 114, 111, 109, 112, 116)) then
-local _0x0092 = tostring(_0x0091._0x0093):lower()
-local _0x0094 = tostring(_0x0091._0x0095):lower()
-local _0x0096 = tostring(_0x0091._0x002a):lower()
-local _0x0097 = _0x0094:find(string.char(108, 101, 118, 101, 108, 32, 117, 112))
-or _0x0092:find(string.char(99, 104, 97, 114, 97, 99, 116, 101, 114, 32, 115, 108, 111, 116))
-or _0x0096:find(string.char(108, 101, 118, 101, 108, 117, 112))
-if _0x0097 then
+local function TriggerMergePrompts()
+for _, prompt in ipairs(workspace:GetDescendants()) do
+if prompt:IsA(string.char(80, 114, 111, 120, 105, 109, 105, 116, 121, 80, 114, 111, 109, 112, 116)) then
+local objectText = tostring(prompt.ObjectText):lower()
+local actionText = tostring(prompt.ActionText):lower()
+local promptName = tostring(prompt.Name):lower()
+local isLevelUpPrompt = actionText:find(string.char(108, 101, 118, 101, 108, 32, 117, 112))
+or objectText:find(string.char(99, 104, 97, 114, 97, 99, 116, 101, 114, 32, 115, 108, 111, 116))
+or promptName:find(string.char(108, 101, 118, 101, 108, 117, 112))
+if isLevelUpPrompt then
 pcall(function()
-if _0x003e then
-_0x003e(_0x0091, 0)
+if fireproximityprompt then
+fireproximityprompt(prompt, 0)
 end
 end)
 end
 end
 end
 end
-_0x0035._0x0036(function()
+task.spawn(function()
 while true do
-if _0x000f then
-pcall(_0x0090)
+if AutoMergeEnabled then
+pcall(TriggerMergePrompts)
 end
-_0x0035._0x003f(_0x0013)
+task.wait(MERGE_DELAY)
 end
 end)
-_0x0046:_0x009a(_0x0043)
-_0x0047:_0x009a(_0x0043)
-_0x0046:_0x009b()
-_0x0046:_0x009c({})
-_0x0047:_0x009d(string.char(83, 101, 110, 122, 121, 72, 117, 98))
-_0x0046:_0x009d(string.char(83, 101, 110, 122, 121, 72, 117, 98, 47, 99, 111, 110, 102, 105, 103, 115))
-_0x0047:_0x009e(_0x0055._0x005b)
-_0x0046:_0x009f(_0x0055._0x005b)
-_0x0048:_0x00a0(1)
-_0x0046:_0x00a1()
+SaveManager:SetLibrary(Fluent)
+InterfaceManager:SetLibrary(Fluent)
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetIgnoreIndexes({})
+InterfaceManager:SetFolder(string.char(83, 101, 110, 122, 121, 72, 117, 98))
+SaveManager:SetFolder(string.char(83, 101, 110, 122, 121, 72, 117, 98, 47, 99, 111, 110, 102, 105, 103, 115))
+InterfaceManager:BuildInterfaceSection(Tabs.Settings)
+SaveManager:BuildConfigSection(Tabs.Settings)
+Window:SelectTab(1)
+SaveManager:LoadAutoloadConfig()
