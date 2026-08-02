@@ -1,5 +1,5 @@
 local Games = {
-    [107653945083776] = "https://raw.githubusercontent.com/senzxyz2xxx/SenzyHub/refs/heads/main/senzyhub1.lua"
+    [107653945083776] = "https://raw.githubusercontent.com/senzxyz2xxx/SenzyHub/refs/heads/main/Maps/senzyhub1.lua"
 }
 
 local currentPlaceId = game.PlaceId
