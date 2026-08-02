@@ -6,7 +6,20 @@ local currentPlaceId = game.PlaceId
 local scriptUrl = Games[currentPlaceId]
 
 if scriptUrl then
-    loadstring(game:HttpGet(scriptUrl))()
+    local success, response = pcall(function()
+        return game:HttpGet(scriptUrl)
+    end)
+    
+    if success and response then
+        local func, err = loadstring(response)
+        if func then
+            func()
+        else
+            warn("[Senzy Hub] Syntax Error :", err)
+        end
+    else
+        warn("[Senzy Hub] Error (Check Network/URL):", response)
+    end
 else
     local StarterGui = game:GetService("StarterGui")
     pcall(function()
